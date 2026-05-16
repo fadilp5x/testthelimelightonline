@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Limelight Online</title>
+    <meta name="description" content="The Limelight is a leading online magazine, offering insightful articles, captivating stories, and in-depth analysis.">
+    
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="The Limelight Online">
+    <meta property="og:description" content="The Limelight is a leading online magazine, offering insightful articles, captivating stories, and in-depth analysis.">
+    <meta property="og:image" content="https://i.ibb.co/NdsYM9dx/web-logo-123.png">
+    
+    <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co/WN46nq9w/favicon-32x32.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { 
+            --primary-color: #fff; 
+            --accent-color: #8B4513; 
+            --text-color: #333; 
+            --light-gray: #f4f4f4; 
+            --border-color: #e0e0e0; 
+            --card-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+            --transition-speed: 0.3s; 
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Roboto', sans-serif; background-color: #fff; color: var(--text-color); line-height: 1.6; }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        a { text-decoration: none; color: inherit; transition: color 0.3s; }
+        a:hover { color: var(--accent-color); }
+
+        /* --- Header & Nav --- */
+        .header { border-bottom: 1px solid var(--border-color); padding: 15px 0; position: sticky; top: 0; background: #fff; z-index: 1000; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; position: relative; }
+        .site-title img { height: 50px; width: auto; }
+
+        .nav-menu { display: flex; list-style: none; align-items: center; gap: 20px; }
+        .nav-item { position: relative; }
+        .nav-link { font-weight: 500; font-size: 15px; text-transform: uppercase; padding: 10px 0; display: block; cursor: pointer; }
+        
+        /* Dropdown */
+        .dropdown { 
+            position: absolute; top: 100%; left: 0; background: white; min-width: 200px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 4px; border: 1px solid var(--border-color);
+            opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.2s; z-index: 100;
+        }
+        .nav-item:hover .dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+        .dropdown-item { display: block; padding: 10px 15px; border-bottom: 1px solid #f0f0f0; color: #333; font-size: 14px; text-transform: none; }
+        .dropdown-item:hover { background: #f9f9f9; color: var(--accent-color); }
+
+        /* Search Bar */
+        .search-container { position: relative; display: flex; align-items: center; }
+        .search-icon { font-size: 18px; cursor: pointer; padding: 5px; color: #555; }
+        .search-input { 
+            position: absolute; right: 30px; top: 50%; transform: translateY(-50%);
+            width: 0; opacity: 0; padding: 8px; border: 1px solid var(--border-color); border-radius: 20px;
+            transition: all 0.3s ease; background: white; pointer-events: none;
+        }
+        .search-container.active .search-input { width: 200px; opacity: 1; pointer-events: auto; padding: 8px 15px; }
+        .search-results {
+            position: absolute; top: 40px; right: 0; width: 300px; background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 4px; display: none; z-index: 200;
+            max-height: 400px; overflow-y: auto;
+        }
+        .search-result-item { display: flex; gap: 10px; padding: 10px; border-bottom: 1px solid #eee; }
+        .search-result-item img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+        .search-result-info h4 { font-size: 14px; margin-bottom: 3px; }
+
+        .mobile-nav-toggle { display: none; background: none; border: none; font-size: 24px; cursor: pointer; }
+
+        /* --- Featured Carousel --- */
+        .featured-carousel { position: relative; margin-bottom: 40px; height: 500px; overflow: hidden; background: #333; }
+        .carousel-container { height: 100%; position: relative; }
+        .carousel-slide { 
+            position: absolute; inset: 0; opacity: 0; transition: opacity 0.8s ease; 
+            display: flex; align-items: flex-end; 
+        }
+        .carousel-slide.active { opacity: 1; z-index: 1; }
+        .carousel-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; opacity: 0.7; }
+        .carousel-overlay { 
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); 
+            width: 100%; padding: 60px 20px 40px; color: white; position: relative; z-index: 2;
+        }
+        .carousel-meta { display: flex; gap: 10px; margin-bottom: 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #ddd; }
+        .carousel-title { font-family: 'Playfair Display', serif; font-size: 2.8rem; margin-bottom: 15px; color: white; line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .carousel-excerpt { max-width: 800px; margin-bottom: 20px; font-size: 1.1rem; color: #eee; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        .carousel-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); border: none; color: white; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: background 0.3s; }
+        .carousel-nav:hover { background: rgba(255,255,255,0.4); }
+        .carousel-prev { left: 20px; }
+        .carousel-next { right: 20px; }
+        .carousel-indicators { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 10; }
+        .indicator { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.3s; }
+        .indicator.active { background: white; transform: scale(1.2); }
+
+        /* --- Articles Grid --- */
+        .articles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; margin-bottom: 50px; }
+        .article-card { 
+            background: white; border: 1px solid var(--border-color); border-radius: 8px; 
+            overflow: hidden; transition: transform 0.3s, box-shadow 0.3s; 
+            box-shadow: var(--card-shadow); display: flex; flex-direction: column;
+        }
+        .article-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .card-image-wrapper { height: 220px; overflow: hidden; position: relative; }
+        .card-image { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+        .article-card:hover .card-image { transform: scale(1.05); }
+        .card-badge { position: absolute; top: 15px; left: 15px; background: var(--accent-color); color: white; padding: 4px 10px; font-size: 11px; font-weight: bold; border-radius: 4px; text-transform: uppercase; }
+
+        .card-content { padding: 25px; flex: 1; display: flex; flex-direction: column; }
+        .card-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; margin-bottom: 10px; line-height: 1.3; font-weight: 700; }
+        .card-excerpt { color: #666; font-size: 0.95rem; margin-bottom: 20px; flex: 1; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .card-author { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #888; border-top: 1px solid #eee; padding-top: 15px; margin-top: auto; }
+        .author-avatar { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+
+        /* --- Footer --- */
+        .site-footer { background: #1a1a1a; color: #ccc; padding: 60px 0 30px; }
+        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; margin-bottom: 40px; }
+        .footer-logo { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: white; margin-bottom: 15px; }
+        .footer-links ul { list-style: none; padding: 0; }
+        .footer-links li { margin-bottom: 10px; }
+        .footer-links a:hover { color: white; text-decoration: underline; }
+        .footer-bottom { text-align: center; border-top: 1px solid #333; padding-top: 20px; font-size: 0.9rem; }
+
+        /* --- Mobile Responsive --- */
+        @media (max-width: 992px) {
+            .mobile-nav-toggle { display: block; }
+            .nav-menu { 
+                position: absolute; top: 100%; left: 0; width: 100%; background: white; 
+                flex-direction: column; align-items: flex-start; padding: 0; 
+                box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
+                display: none; border-top: 1px solid #eee;
+            }
+            .nav-menu.active { display: flex; }
+            .nav-item { width: 100%; border-bottom: 1px solid #f0f0f0; }
+            .nav-link { padding: 15px 20px; width: 100%; display: flex; justify-content: space-between; }
+            
+            /* Mobile Dropdown */
+            .dropdown { position: static; box-shadow: none; border: none; background: #f9f9f9; padding-left: 20px; display: none; opacity: 1; visibility: visible; transform: none; min-width: 100%; }
+            .nav-item.mobile-open .dropdown { display: block; }
+            .nav-item i { transition: transform 0.3s; }
+            .nav-item.mobile-open > .nav-link i { transform: rotate(180deg); }
+
+            .featured-carousel { height: 400px; }
+            .carousel-title { font-size: 1.8rem; }
+            .search-container { display: none; } /* Hide desktop search on mobile, usually handled by a separate mobile input if needed */
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container header-content">
+            <a href="/index.html" class="site-title"><img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight"></a>
+            
+            <div class="mobile-controls" style="display: flex; gap: 15px; align-items: center;">
+                 <!-- Mobile Search Trigger could go here -->
+                <button class="mobile-nav-toggle"><i class="fas fa-bars"></i></button>
+            </div>
+
+            <ul class="nav-menu" id="navMenu">
+                <!-- Nav items injected by JS -->
+                <li class="nav-item">
+                    <div class="search-container" id="searchContainer">
+                        <input type="text" class="search-input" id="searchInput" placeholder="Search articles...">
+                        <i class="fas fa-search search-icon" id="searchIcon"></i>
+                        <div class="search-results" id="searchResults"></div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Slideshow for Featured Posts -->
+        <section class="featured-carousel" id="featuredCarousel">
+            <div class="carousel-container" id="carouselContainer">
+                <!-- Slides injected here -->
+            </div>
+            <button class="carousel-nav carousel-prev"><i class="fas fa-chevron-left"></i></button>
+            <button class="carousel-nav carousel-next"><i class="fas fa-chevron-right"></i></button>
+            <div class="carousel-indicators" id="carouselIndicators"></div>
+        </section>
+
+        <h2 style="font-family: 'Playfair Display', serif; text-align: center; margin-bottom: 40px; font-size: 2.2rem; color: var(--accent-color);">Latest Articles</h2>
+        
+        <div class="articles-grid" id="articlesGrid"></div>
+        
+        <div style="text-align: center; margin-bottom: 60px; display: none;" id="loadMoreContainer">
+            <button id="loadMoreBtn" style="padding: 12px 40px; background: var(--accent-color); color: white; border: none; font-size: 1rem; cursor: pointer; border-radius: 30px; font-weight: 500; transition: background 0.3s;">Load More Articles</button>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-grid">
+            <div>
+                <h3 class="footer-logo">THE LIMELIGHT</h3>
+                <p>Insightful articles, captivating stories, and in-depth analysis on a variety of topics that matter.</p>
+            </div>
+            <div>
+                <h4 style="color:white; margin-bottom:20px; font-size: 1.1rem;">Categories</h4>
+                <div class="footer-links"><ul id="footerCategories"></ul></div>
+            </div>
+            <div>
+                <h4 style="color:white; margin-bottom:20px; font-size: 1.1rem;">Support</h4>
+                <div class="footer-links"><ul id="footerSupport"></ul></div>
+            </div>
+        </div>
+        <div class="footer-bottom"><p>&copy; 2025 The Limelight Online. All rights reserved.</p></div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://whklfmxjknhucguzvpob.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indoa2xmbXhqa25odWNndXp2cG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyOTY5MjIsImV4cCI6MjA3Mzg3MjkyMn0.5Y2an8aYFc5wY64VmRJmnblYBPwLLs_CR9UXJ4XuzjM';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentSlide = 0;
+        let slideInterval;
+        let currentPage = 1;
+        const POSTS_PER_PAGE = 9;
+
+        // Mobile Nav Toggle
+        document.querySelector('.mobile-nav-toggle').addEventListener('click', () => {
+            document.getElementById('navMenu').classList.toggle('active');
+        });
+
+        async function init() {
+            await fetchNav();
+            await fetchFeatured();
+            await fetchPosts();
+            setupSearch();
+        }
+
+        // 1. Fetch Nav with Submenus
+        async function fetchNav() {
+            // Fetch top level
+            const { data: parents } = await supabaseClient.from('categories').select('*').is('parent_id', null).order('name');
+            const navMenu = document.getElementById('navMenu');
+            const searchLi = navMenu.querySelector('.nav-item:last-child'); // Keep search at end
+            
+            let navHtml = `<li class="nav-item"><a href="/index.html" class="nav-link">Home</a></li>`;
+            let footerHtml = '';
+
+            if (parents) {
+                for (const p of parents) {
+                    // Fetch children
+                    const { data: children } = await supabaseClient.from('categories').select('*').eq('parent_id', p.id).order('name');
+                    
+                    if (children && children.length > 0) {
+                        navHtml += `
+                            <li class="nav-item has-dropdown">
+                                <span class="nav-link">${p.name} <i class="fas fa-chevron-down" style="font-size:10px; margin-left:5px;"></i></span>
+                                <div class="dropdown">
+                                    <a href="/index.html?categories=${p.slug}" class="dropdown-item">All ${p.name}</a>
+                                    ${children.map(c => `<a href="/index.html?categories=${c.slug}" class="dropdown-item">${c.name}</a>`).join('')}
+                                </div>
+                            </li>`;
+                    } else {
+                        navHtml += `<li class="nav-item"><a href="/index.html?categories=${p.slug}" class="nav-link">${p.name}</a></li>`;
+                    }
+                    footerHtml += `<li><a href="/index.html?categories=${p.slug}">${p.name}</a></li>`;
+                }
+            }
+            
+            navHtml += `<li class="nav-item"><a href="/authors.html" class="nav-link">Authors</a></li>
+                        <li class="nav-item"><a href="/contact.html" class="nav-link">Contact</a></li>`;
+            
+            // Insert before search
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = navHtml;
+            while(tempDiv.firstChild) {
+                navMenu.insertBefore(tempDiv.firstChild, searchLi);
+            }
+            
+            document.getElementById('footerCategories').innerHTML = footerHtml;
+
+            // Mobile Dropdown Logic
+            document.querySelectorAll('.has-dropdown > .nav-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    if(window.innerWidth <= 992) {
+                        e.preventDefault();
+                        link.parentElement.classList.toggle('mobile-open');
+                    } else {
+                         // On desktop, clicking parent goes to parent category
+                         const parentSlug = link.innerText.trim().toLowerCase(); // rough approx or store slug in dataset
+                         // window.location.href = ... 
+                    }
+                });
+            });
+        }
+
+        // 2. Fetch Featured (Slideshow)
+        async function fetchFeatured() {
+            const { data: featured } = await supabaseClient.from('posts')
+                .select('*, authors(full_name), categories(name)')
+                .eq('is_featured', true)
+                .order('created_at', { ascending: false })
+                .limit(5);
+
+            const container = document.getElementById('carouselContainer');
+            const indicators = document.getElementById('carouselIndicators');
+
+            if (featured && featured.length > 0) {
+                container.innerHTML = featured.map((p, i) => `
+                    <div class="carousel-slide ${i === 0 ? 'active' : ''}">
+                        <img src="${p.image_url}" class="carousel-image" alt="${p.title}">
+                        <div class="carousel-overlay">
+                            <div class="carousel-meta">
+                                <span>${p.categories.name}</span>
+                                <span>&bull;</span>
+                                <span>${new Date(p.created_at).toLocaleDateString()}</span>
+                            </div>
+                            <h2 class="carousel-title"><a href="/article/${p.slug}" style="color:white">${p.title}</a></h2>
+                            <div class="carousel-excerpt">${p.excerpt || ''}</div>
+                        </div>
+                    </div>
+                `).join('');
+
+                indicators.innerHTML = featured.map((_, i) => `<div class="indicator ${i === 0 ? 'active' : ''}" onclick="goToSlide(${i})"></div>`).join('');
+                
+                // Start Timer
+                startSlideTimer();
+                
+                // Event Listeners
+                document.querySelector('.carousel-prev').addEventListener('click', () => changeSlide(-1));
+                document.querySelector('.carousel-next').addEventListener('click', () => changeSlide(1));
+            } else {
+                document.getElementById('featuredCarousel').style.display = 'none';
+            }
+        }
+
+        function changeSlide(dir) {
+            const slides = document.querySelectorAll('.carousel-slide');
+            const dots = document.querySelectorAll('.indicator');
+            slides[currentSlide].classList.remove('active');
+            dots[currentSlide].classList.remove('active');
+            
+            currentSlide = (currentSlide + dir + slides.length) % slides.length;
+            
+            slides[currentSlide].classList.add('active');
+            dots[currentSlide].classList.add('active');
+            resetTimer();
+        }
+
+        function goToSlide(index) {
+            const slides = document.querySelectorAll('.carousel-slide');
+            const dots = document.querySelectorAll('.indicator');
+            slides[currentSlide].classList.remove('active');
+            dots[currentSlide].classList.remove('active');
+            
+            currentSlide = index;
+            
+            slides[currentSlide].classList.add('active');
+            dots[currentSlide].classList.add('active');
+            resetTimer();
+        }
+
+        function startSlideTimer() { slideInterval = setInterval(() => changeSlide(1), 5000); }
+        function resetTimer() { clearInterval(slideInterval); startSlideTimer(); }
+
+        // 3. Fetch Latest Posts Grid
+        async function fetchPosts() {
+            const { data: posts, count } = await supabaseClient.from('posts')
+                .select('*, authors(full_name, avatar_url), categories(name)', { count: 'exact' })
+                .order('created_at', { ascending: false })
+                .range((currentPage - 1) * POSTS_PER_PAGE, currentPage * POSTS_PER_PAGE - 1);
+
+            const grid = document.getElementById('articlesGrid');
+            if (currentPage === 1) grid.innerHTML = '';
+
+            if (posts) {
+                posts.forEach(p => {
+                    grid.innerHTML += `
+                        <div class="article-card">
+                            <a href="/article/${p.slug}" class="card-image-wrapper">
+                                <span class="card-badge">${p.categories.name}</span>
+                                <img src="${p.image_url}" class="card-image" loading="lazy" alt="${p.title}">
+                            </a>
+                            <div class="card-content">
+                                <h3 class="card-title"><a href="/article/${p.slug}">${p.title}</a></h3>
+                                <div class="card-excerpt">${p.excerpt || ''}</div>
+                                <div class="card-author">
+                                    <img src="${p.authors.avatar_url || 'https://via.placeholder.com/30'}" class="author-avatar">
+                                    <span>${p.authors.full_name}</span>
+                                    <span style="margin-left:auto;">${new Date(p.created_at).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                // Load More Logic
+                /* if (count > currentPage * POSTS_PER_PAGE) {
+                     document.getElementById('loadMoreContainer').style.display = 'block';
+                 } else {
+                     document.getElementById('loadMoreContainer').style.display = 'none';
+                 }*/
+            }
+        }
+
+        // 4. Search Functionality
+        function setupSearch() {
+            const container = document.getElementById('searchContainer');
+            const icon = document.getElementById('searchIcon');
+            const input = document.getElementById('searchInput');
+            const results = document.getElementById('searchResults');
+            let debounceTimer;
+
+            icon.addEventListener('click', () => {
+                container.classList.toggle('active');
+                if(container.classList.contains('active')) input.focus();
+            });
+
+            input.addEventListener('input', (e) => {
+                clearTimeout(debounceTimer);
+                const query = e.target.value;
+                
+                if(query.length < 2) {
+                    results.style.display = 'none';
+                    return;
+                }
+
+                debounceTimer = setTimeout(async () => {
+                    const { data } = await supabaseClient.from('posts').select('title, slug, image_url').ilike('title', `%${query}%`).limit(5);
+                    
+                    if(data && data.length) {
+                        results.innerHTML = data.map(p => `
+                            <a href="/article/${p.slug}" class="search-result-item">
+                                <img src="${p.image_url}">
+                                <div class="search-result-info">
+                                    <h4>${p.title}</h4>
+                                </div>
+                            </a>
+                        `).join('');
+                        results.style.display = 'block';
+                    } else {
+                        results.innerHTML = '<div style="padding:10px;">No results found.</div>';
+                        results.style.display = 'block';
+                    }
+                }, 300);
+            });
+            
+            // Close search when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!container.contains(e.target)) {
+                    container.classList.remove('active');
+                    results.style.display = 'none';
+                }
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- DYNAMIC SEO PLACEHOLDERS -->
+    <title>__SEO_TITLE__ | The Limelight</title>
+    <meta name="description" content="__SEO_DESC__">
+    <meta name="author" content="__SEO_AUTHOR__">
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="__SEO_URL__">
+    <meta property="og:title" content="__SEO_TITLE__">
+    <meta property="og:description" content="__SEO_DESC__">
+    <meta property="og:image" content="__SEO_IMAGE__">
+    
+    <!-- WhatsApp Requirements: Dimensions & Type hints -->
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:type" content="image/jpeg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="__SEO_TITLE__">
+    <meta property="twitter:description" content="__SEO_DESC__">
+    <meta property="twitter:image" content="__SEO_IMAGE__">
+
+    <!-- Schema.org / WhatsApp Fallback -->
+    <meta itemprop="name" content="__SEO_TITLE__">
+    <meta itemprop="description" content="__SEO_DESC__">
+    <meta itemprop="image" content="__SEO_IMAGE__">
+
+    <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co/WN46nq9w/favicon-32x32.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #fff;
+            --secondary-bg: #f9f9f9;
+            --accent-color: #8B4513;
+            --text-color: #222;
+            --text-muted: #555;
+            --border-color: #eaeaea;
+            --footer-bg: #1a1a1a;
+            --max-content-width: 800px; /* Constrain text width for readability */
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background-color: var(--primary-bg); 
+            color: var(--text-color); 
+            line-height: 1.8; 
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+        
+        a { color: inherit; text-decoration: none; transition: color 0.2s; }
+        a:hover { color: var(--accent-color); }
+        img { max-width: 100%; height: auto; display: block; }
+
+        /* --- Header --- */
+        .header { border-bottom: 1px solid var(--border-color); padding: 15px 0; position: sticky; top: 0; background: #fff; z-index: 100; }
+        .header-content { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+        .site-logo img { height: 45px; width: auto; }
+        .nav-home-link { font-weight: 500; font-size: 14px; text-transform: uppercase; display: flex; align-items: center; gap: 5px; }
+
+        /* --- Layout Grid --- */
+        .main-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: grid;
+            grid-template-columns: 200px 1fr 200px; /* Sidebar | Content | Sidebar */
+            gap: 40px;
+            align-items: start;
+        }
+
+        /* --- Article Content --- */
+        .article-content {
+            width: 100%;
+            max-width: var(--max-content-width);
+            margin: 0 auto;
+        }
+
+        /* 1. Article Header */
+        .article-header { text-align: center; margin-bottom: 30px; }
+        .category-label { 
+            display: inline-block; 
+            font-family: 'Playfair Display', serif; 
+            color: var(--accent-color); 
+            font-weight: 700; 
+            font-size: 1.1rem; 
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .article-title { 
+            font-family: 'Playfair Display', serif; 
+            font-size: 2.8rem; 
+            line-height: 1.2; 
+            margin-bottom: 20px; 
+            color: #111;
+        }
+        .article-meta { 
+            display: flex; align-items: center; justify-content: center; gap: 15px; 
+            font-size: 0.95rem; color: var(--text-muted); border-top: 1px solid #eee; 
+            border-bottom: 1px solid #eee; padding: 15px 0; margin-top: 20px;
+        }
+        .author-info img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; margin-right: 8px; vertical-align: middle; display: inline-block; }
+
+        /* 2. Featured Image (FIXED SIZE) */
+        .featured-image-container {
+            width: 100%;
+            height: 500px; /* Fixed height for desktop */
+            background: #f0f0f0;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 40px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        .featured-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Crucial: crops image instead of stretching */
+            object-position: center top;
+        }
+
+        /* 3. Body Text (Readability Optimized) */
+        .article-body { 
+            font-family: 'Georgia', serif; 
+            font-size: 1.2rem; /* Larger text as requested */
+            color: #2a2a2a;
+            overflow-wrap: break-word; /* Prevents long words/URLs from breaking layout */
+        }
+        .article-body p { margin-bottom: 1.8em; }
+        
+        /* Force images inside body to respect width */
+        .article-body img { 
+            max-width: 100%; 
+            height: auto; 
+            border-radius: 4px; 
+            margin: 30px auto; 
+        }
+
+        .article-body h2 { 
+            font-family: 'Playfair Display', serif; 
+            font-size: 1.8rem; 
+            margin-top: 50px; 
+            margin-bottom: 20px; 
+            color: var(--accent-color);
+        }
+
+        .article-body blockquote {
+            border-left: 4px solid var(--accent-color);
+            padding-left: 20px;
+            margin: 30px 0;
+            font-style: italic;
+            font-size: 1.3rem;
+            color: #555;
+            background: #fdfdfd;
+            padding: 20px;
+        }
+
+        /* --- Sidebars (Desktop) --- */
+        .left-sidebar { position: sticky; top: 100px; text-align: right; }
+        .toc-title { font-size: 0.85rem; text-transform: uppercase; color: #999; margin-bottom: 15px; letter-spacing: 1px; }
+        .toc-list { list-style: none; }
+        .toc-list li { margin-bottom: 10px; }
+        .toc-list a { font-size: 0.9rem; color: #666; display: block; border-right: 2px solid transparent; padding-right: 15px; }
+        .toc-list a.active { color: var(--accent-color); border-right-color: var(--accent-color); font-weight: bold; }
+
+        .share-bar { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; margin-top: 40px; }
+        .share-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; transition: transform 0.2s; font-size: 16px; }
+        .share-icon:hover { transform: scale(1.1); }
+
+        /* --- Footer --- */
+        .site-footer { background: var(--footer-bg); color: #ccc; padding: 60px 0 20px; margin-top: 80px; }
+        .footer-content { max-width: 1200px; margin: 0 auto; padding: 0 20px; text-align: center; }
+
+        /* --- Mobile Optimization --- */
+        @media (max-width: 992px) {
+            .main-wrapper { 
+                display: block; /* Stack everything */
+                padding: 20px;
+            }
+            .left-sidebar, .right-sidebar { display: none; } /* Hide sidebars on mobile */
+            
+            .article-header { text-align: left; }
+            .article-title { font-size: 2.2rem; }
+            .article-meta { justify-content: flex-start; }
+            
+            .featured-image-container { 
+                height: 300px; /* Smaller height for mobile */
+                margin-bottom: 30px;
+            }
+            
+            .article-body { font-size: 1.1rem; }
+            
+            /* Sticky Share Bar for Mobile (Bottom) */
+            .mobile-share-bar {
+                position: fixed; bottom: 0; left: 0; width: 100%; 
+                background: white; border-top: 1px solid #ddd;
+                display: flex; justify-content: space-around; padding: 15px;
+                z-index: 999;
+            }
+            .mobile-share-bar a { color: #333; font-size: 20px; }
+        }
+        @media (min-width: 993px) {
+            .mobile-share-bar { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-content">
+            <a href="/index.html" class="nav-home-link"><i class="fas fa-arrow-left"></i> Home</a>
+            <a href="/index.html" class="site-logo">
+                <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight">
+            </a>
+            <div style="width: 60px;"></div> <!-- Spacer -->
+        </div>
+    </header>
+
+    <div class="main-wrapper">
+        <!-- Sidebar: Table of Contents & Share -->
+        <aside class="left-sidebar">
+            <div class="toc-title">Table of Contents</div>
+            <ul class="toc-list" id="tocList"></ul>
+            
+            <div class="share-bar">
+                <a href="#" class="share-icon" style="background:#3b5998" id="shareFb"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="share-icon" style="background:#1da1f2" id="shareTw"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="share-icon" style="background:#25d366" id="shareWa"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <article class="article-content" id="mainContent">
+            <!-- Content Injected via JS -->
+            <div style="padding: 100px 0; text-align: center;">
+                <i class="fas fa-circle-notch fa-spin fa-2x" style="color:var(--accent-color)"></i>
+            </div>
+        </article>
+        
+        <!-- Right Sidebar (Empty for balance or ads) -->
+        <aside class="right-sidebar"></aside>
+    </div>
+
+    <!-- Mobile Share Bar -->
+    <div class="mobile-share-bar">
+        <a href="#" id="mShareFb"><i class="fab fa-facebook-f"></i></a>
+        <a href="#" id="mShareTw"><i class="fab fa-twitter"></i></a>
+        <a href="#" id="mShareWa"><i class="fab fa-whatsapp"></i></a>
+        <a href="#" id="mShareCp"><i class="fas fa-copy"></i></a>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <h3 style="color:white; font-family:'Playfair Display'; margin-bottom:10px;">THE LIMELIGHT</h3>
+            <p>&copy; 2025 The Limelight Online. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://whklfmxjknhucguzvpob.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indoa2xmbXhqa25odWNndXp2cG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyOTY5MjIsImV4cCI6MjA3Mzg3MjkyMn0.5Y2an8aYFc5wY64VmRJmnblYBPwLLs_CR9UXJ4XuzjM';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const pathParts = window.location.pathname.split('/');
+        const slug = pathParts[pathParts.length - 1];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if(slug) {
+                await loadArticle();
+            }
+        });
+
+        async function loadArticle() {
+            const { data: article, error } = await supabaseClient
+                .from('posts')
+                .select(`*, authors(full_name, avatar_url), categories(name)`)
+                .eq('slug', slug)
+                .single();
+
+            const container = document.getElementById('mainContent');
+
+            if(error || !article) {
+                container.innerHTML = `<div style="text-align:center"><h1>Article not found</h1><a href="/index.html">Return Home</a></div>`;
+                return;
+            }
+
+            // 1. Render Article
+            container.innerHTML = `
+                <header class="article-header">
+                    <span class="category-label">${article.categories.name}</span>
+                    <h1 class="article-title">${article.title}</h1>
+                    <div class="article-meta">
+                        <div class="author-info">
+                            <img src="${article.authors.avatar_url || 'https://via.placeholder.com/40'}" alt="${article.authors.full_name}">
+                            <span>By <strong>${article.authors.full_name}</strong></span>
+                        </div>
+                        <span>&bull;</span>
+                        <span>${new Date(article.created_at).toLocaleDateString()}</span>
+                    </div>
+                </header>
+
+                <div class="featured-image-container">
+                    <img src="${article.image_url}" alt="${article.title}" class="featured-image">
+                </div>
+
+                <div class="article-body" id="articleBody">
+                    ${article.content}
+                </div>
+            `;
+
+            // 2. Setup TOC & Share
+            setupTOC();
+            setupShare(article);
+        }
+
+        function setupTOC() {
+            const body = document.getElementById('articleBody');
+            const list = document.getElementById('tocList');
+            const headers = body.querySelectorAll('h2');
+            
+            if(headers.length > 0) {
+                headers.forEach((h, i) => {
+                    h.id = `section-${i}`;
+                    const li = document.createElement('li');
+                    li.innerHTML = `<a href="#section-${i}">${h.innerText}</a>`;
+                    list.appendChild(li);
+                });
+
+                // Scroll spy
+                window.addEventListener('scroll', () => {
+                    let current = '';
+                    headers.forEach(h => {
+                        const top = h.offsetTop;
+                        if(scrollY >= top - 150) current = h.getAttribute('id');
+                    });
+                    list.querySelectorAll('a').forEach(a => {
+                        a.classList.remove('active');
+                        if(a.getAttribute('href').includes(current) && current !== '') {
+                            a.classList.add('active');
+                        }
+                    });
+                });
+            } else {
+                list.innerHTML = '<li>No sections</li>';
+            }
+        }
+
+        function setupShare(article) {
+            const url = encodeURIComponent(window.location.href);
+            const title = encodeURIComponent(article.title);
+            
+            const fb = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+            const tw = `https://twitter.com/intent/tweet?text=${title}&url=${url}`;
+            const wa = `https://api.whatsapp.com/send?text=${title}%20${url}`;
+            
+            document.getElementById('shareFb').href = fb;
+            document.getElementById('shareTw').href = tw;
+            document.getElementById('shareWa').href = wa;
+            
+            document.getElementById('mShareFb').href = fb;
+            document.getElementById('mShareTw').href = tw;
+            document.getElementById('mShareWa').href = wa;
+        }
+    </script>
+</body>
+</html>

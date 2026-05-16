@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About & Contact | The Limelight</title>
+    <meta name="description" content="The Limelight is a bimonthly academic web magazine. Learn about our mission, vision, and the editorial team behind our publication.">
+    <meta name="keywords" content="about us, contact, limelight, magazine, academic, islamic, scholarship">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="YOUR_WEBSITE_URL_HERE/contact.html">
+    <meta property="og:title" content="About & Contact | The Limelight">
+    <meta property="og:description" content="The Limelight is a bimonthly academic web magazine. Learn about our mission, vision, and the editorial team.">
+    <meta property="og:image" content="https://i.ibb.co/jP5y4RxK/Snap-Insta-to-512555097-1409145510378151-4841069157913811354-n.jpg">
+
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="YOUR_WEBSITE_URL_HERE/contact.html">
+    <meta property="twitter:title" content="About & Contact | The Limelight">
+    <meta property="twitter:description" content="The Limelight is a bimonthly academic web magazine. Learn about our mission, vision, and the editorial team.">
+    <meta property="twitter:image" content="https://i.ibb.co/jP5y4RxK/Snap-Insta-to-512555097-1409145510378151-4841069157913811354-n.jpg">
+
+    <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co/WN46nq9w/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://i.ibb.co/23BLSNfj/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="https://i.ibb.co/sdG9FZWh/android-chrome-192x192.png">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #fff;
+            --secondary-color: #f8f9fa;
+            --accent-color: #8B4513; /* Brownish */
+            --text-color: #333;
+            --light-gray: #e9ecef;
+            --border-color: #dee2e6;
+            --maroon-bg: #8c1515; /* A more academic maroon */
+            --purple-btn: #6f42c1;
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --footer-bg: #1a1a1a;
+            --footer-text: #ccc;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--secondary-color); color: var(--text-color); line-height: 1.7; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+        a { color: var(--text-color); text-decoration: none; transition: color 0.3s ease; }
+        a:hover { color: var(--accent-color); }
+        
+        /* Header and Nav - Kept from existing file */
+        .header { padding: 20px 0; text-align: center; border-bottom: 1px solid var(--border-color); position: relative; z-index: 100; background-color: var(--primary-color); }
+        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 20px;}
+        .site-title { text-align: left; }
+        .site-title img { max-height: 65px; width: auto; }
+        .nav-container { display: flex; justify-content: flex-end; align-items: center; }
+        .nav-menu { display: flex; justify-content: center; list-style: none; flex-wrap: wrap; align-items: center; }
+        .nav-item { margin: 0 15px; position: relative; }
+        .nav-link { display: flex; align-items: center; font-weight: 500; padding: 5px 0; transition: all 0.3s ease; }
+        .nav-link:hover { color: var(--accent-color); }
+        .mobile-nav-toggle { display: none; background: none; border: none; font-size: 24px; cursor: pointer; z-index: 1001; }
+        .dropdown { position: absolute; top: 100%; left: 0; background: white; min-width: 200px; box-shadow: var(--card-shadow); border-radius: 6px; opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s ease; z-index: 100; border: 1px solid var(--border-color); }
+        .nav-item:hover .dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+        .dropdown-item { display: block; padding: 10px 15px; color: var(--text-color); transition: background-color 0.2s; }
+        .dropdown-item:hover { background-color: var(--light-gray); color: var(--accent-color); }
+        
+        /* Hero Section */
+        .page-hero {
+            padding: 8rem 1rem; text-align: center; color: white;
+            background: linear-gradient(rgba(20, 20, 20, 0.6), rgba(20, 20, 20, 0.6)), url('https://i.ibb.co/jP5y4RxK/Snap-Insta-to-512555097-1409145510378151-4841069157913811354-n.jpg') no-repeat center center/cover;
+            background-attachment: fixed;
+        }
+        .page-hero h1 { font-family: 'Playfair Display', serif; font-size: 3.5rem; font-weight: 700; }
+
+        /* Content Sections & Animations */
+        .content-section { padding: 5rem 0; }
+        .animated { opacity: 0; transform: translateY(40px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+        .animated.is-visible { opacity: 1; transform: translateY(0); }
+        .section-title { font-family: 'Playfair Display', serif; font-size: 2.8rem; margin-bottom: 2rem; color: var(--maroon-bg); text-align: center; }
+        .about-text { max-width: 800px; margin: 0 auto; text-align: center; font-size: 1.1rem; color: #555; }
+        
+        .mission-vision-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-top: 3rem;
+        }
+        .mission-vision-grid .card {
+            background: var(--primary-color); padding: 2.5rem; border-top: 4px solid var(--maroon-bg); box-shadow: var(--card-shadow);
+        }
+        .mission-vision-grid .card h3 { font-family: 'Playfair Display', serif; font-size: 1.8rem; margin-bottom: 1rem; }
+
+        /* Disclaimer Section */
+        .disclaimer-section { background-color: var(--primary-color); }
+        .disclaimer-box { max-width: 800px; margin: 0 auto; text-align: center; border: 1px solid var(--border-color); padding: 2rem; }
+        .disclaimer-box i { font-size: 2rem; color: var(--maroon-bg); margin-bottom: 1rem; }
+        .disclaimer-box p { font-style: italic; color: #666; }
+
+        /* Team Section */
+        .team-section { background-color: var(--primary-color); }
+        .associates-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 2rem; margin-top: 3rem; }
+        .associate-card {
+            background-color: var(--secondary-color); text-align: center; padding: 1.5rem;
+            border-bottom: 3px solid transparent; transition: all 0.3s ease;
+        }
+        .associate-card:hover { transform: translateY(-8px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-bottom-color: var(--maroon-bg); }
+        .associate-card img {
+            width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 5px solid var(--primary-color);
+            margin: -60px auto 1rem auto; display: block; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        .associate-card h4 { font-family: 'Roboto', sans-serif; font-weight: 500; font-size: 1.2rem; margin-bottom: 0.25rem; }
+        .associate-card p { font-size: 0.95rem; color: var(--maroon-bg); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* CTA Section */
+        .cta-section {
+            background: var(--maroon-bg); color: white; text-align: center; padding: 4rem 1rem;
+        }
+        .cta-section h2 { font-family: 'Playfair Display', serif; font-size: 2.5rem; margin-bottom: 1rem; }
+        .cta-section p { max-width: 600px; margin: 0 auto 1.5rem auto; opacity: 0.9; font-size: 1.1rem; }
+        .cta-button {
+            background-color: white; color: var(--maroon-bg); padding: 0.8rem 2.5rem; border-radius: 50px; font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .cta-button:hover { background-color: var(--secondary-color); transform: scale(1.05); }
+        
+        /* Contact Section */
+        .contact-wrapper { max-width: 900px; margin: auto; }
+        .info-box { border: 1px solid var(--border-color); padding: 2.5rem; background: var(--primary-color); text-align: center; }
+        .info-item { margin-bottom: 1.5rem; }
+        .info-item strong { display: block; font-weight: 500; margin-bottom: 0.25rem; }
+        .info-item span, .info-item a { color: #666; font-size: 1rem; }
+        .contact-form { margin-top: 2rem; }
+        .contact-form .form-control { width: 100%; padding: 14px; margin-bottom: 1rem; border: 1px solid var(--border-color); background: var(--primary-color); font-size: 1rem; }
+        .contact-form .form-control:focus { outline: 1px solid var(--purple-btn); }
+        .submit-btn {
+            background-color: var(--purple-btn); color: white; border: none; padding: 14px 30px; font-size: 1rem; font-weight: 500;
+            cursor: pointer; transition: background-color 0.2s ease; width: 100%;
+        }
+        .submit-btn:hover { background-color: #5a379b; }
+        .follow-box { text-align: center; margin-top: 2.5rem; }
+        .follow-box a { margin: 0 0.75rem; font-size: 1.5rem; color: var(--text-color); }
+
+        /* Footer */
+        .site-footer { background-color: var(--footer-bg); color: var(--footer-text); padding: 60px 0 0; font-size: 15px; }
+        .footer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; padding-bottom: 40px; border-bottom: 1px solid #444; }
+        .footer-about .footer-logo { font-family: 'Playfair Display', serif; font-size: 28px; color: white; margin-bottom: 15px; }
+        .footer-links h4 { font-size: 18px; color: white; margin-bottom: 20px; font-weight: 500; }
+        .footer-links ul { list-style: none; }
+        .footer-links ul li { margin-bottom: 12px; }
+        .footer-links ul a { color: var(--footer-text); transition: color 0.2s; }
+        .footer-links ul a:hover { color: white; }
+        #footerSubscribeForm { display: flex; }
+        #footerSubscribeForm input { flex-grow: 1; border: none; padding: 12px; background-color: #333; color: white; }
+        #footerSubscribeForm button { border: none; background-color: var(--purple-btn); color: white; padding: 0 20px; cursor: pointer; }
+        .footer-bottom { padding: 20px 0; text-align: center; font-size: 14px; }
+        
+        /* Responsive Styles */
+        @media (max-width: 992px) { 
+            .mission-vision-grid { grid-template-columns: 1fr; }
+            .page-hero h1 { font-size: 2.8rem; }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 768px) { 
+            .header-content { flex-direction: row; }
+            .mobile-nav-toggle { display: block; order: 2; }
+            .nav-container { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            .nav-container.active { display: block; }
+            .nav-menu { flex-direction: column; align-items: flex-start; padding: 10px 0; }
+            .nav-item { margin: 0; width: 100%; border-bottom: 1px solid var(--border-color); }
+            .nav-link { padding: 15px 20px; width: 100%; justify-content: flex-start; }
+            .dropdown { position: static; box-shadow: none; border: none; background: #f9f9f9; padding-left: 20px; }
+            .footer-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="site-title">
+                <a href="index.html">
+                    <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight Online Logo">
+                </a>
+            </div>
+            <button class="mobile-nav-toggle" aria-label="Open navigation menu"><i class="fas fa-bars"></i></button>
+            <div class="nav-container" id="navContainer">
+                <ul class="nav-menu" id="categoryNav"></ul>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="page-hero">
+            <h1 class="animated">About The Limelight</h1>
+        </section>
+        
+        <div class="container">
+            <section class="content-section">
+                <p class="about-text animated">
+                    The Limelight is a bimonthly academic web magazine established under Shamsul Huda Islamic Academy, Kerala. It serves as a platform for critical inquiry, creative reflection, and interdisciplinary engagement at the intersection of culture, scholarship, and faith. The publication seeks to illuminate ideas often overlooked in mainstream discourse, bringing together voices from literature, anthropology, history, and theology to foster a deeper understanding of the intellectual and spiritual life of Muslim societies and beyond.
+                </p>
+
+                <div class="mission-vision-grid">
+                    <div class="card animated" style="transition-delay: 0.2s;">
+                        <h3>Our Mission</h3>
+                        <p>Our mission is to cultivate a culture of thoughtful scholarship and creative exchange. Rooted in both academic integrity and spiritual insight, The Limelight aims to bridge classical traditions of knowledge with contemporary perspectives. By engaging scholars, students, and readers in dialogue across disciplines, the magazine aspires to build a living archive of ideas that reflect the diversity, depth, and dynamism of Islamic intellectual life.</p>
+                    </div>
+                    <div class="card animated" style="transition-delay: 0.4s;">
+                        <h3>Our Vision</h3>
+                        <p>We envision The Limelight as an evolving space where the pursuit of knowledge transcends boundaries of geography, language, and discipline. The magazine seeks to nurture a new generation of thinkers capable of engaging critically with modernity while remaining grounded in ethical and spiritual consciousness. Through consistent inquiry and collaboration, The Limelight hopes to contribute to a global conversation on knowledge, culture, and community.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <section class="disclaimer-section content-section">
+            <div class="container">
+                <div class="disclaimer-box animated">
+                    <i class="fas fa-gavel"></i>
+                    <h3 class="section-title" style="font-size: 2rem; margin-bottom: 1rem;">Editorial Disclaimer</h3>
+                    <p>The content published in The Limelight represents the perspectives of individual authors and contributors. While we encourage intellectual freedom and informed critique, the opinions expressed in articles do not necessarily reflect those of the editorial board or its parent institution. Articles may be shared or republished for non-commercial purposes with due citation and prior permission from the editorial team.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="team-section content-section">
+            <div class="container">
+                <h2 class="section-title animated">Key Associates</h2>
+                <div class="associates-grid">
+                    <div class="associate-card animated" style="transition-delay: 0.1s;">
+                        <img src="https://i.ibb.co/jj3L0hp/Whats-App-Image-2025-10-06-at-15-13-01-95b04e94.jpg" alt="Sayyed Mashur Hudawi">
+                        <h4>Sayyed Mashur Hudawi</h4>
+                        <p>Chief Editor</p>
+                    </div> 
+                    <div class="associate-card animated" style="transition-delay: 0.2s;">
+                        <img src="https://i.ibb.co/xKyHDV0W/image.png" alt="Suhail Hudawi Nattukal">
+                        <h4>Suhail Hudawi Nattukal</h4>
+                        <p>Editor in Charge</p>
+                    </div>
+                     <div class="associate-card animated" style="transition-delay: 0.3s;">
+                        <img src="https://i.ibb.co/prMpvTPM/Whats-App-Image-2025-10-06-at-21-01-00-b479a808.jpg" alt="Midlaj Wafy Kodiyathur">
+                        <h4>Midlaj Wafy Kodiyathur</h4>
+                        <p>Executive Editor</p>
+                    </div>
+                    <div class="associate-card animated" style="transition-delay: 0.4s;">
+                        <img src="https://via.placeholder.com/140/8c1515/FFFFFF?text=SH" alt="Shakir Hudawi Farook">
+                        <h4>Shakir Hudawi Farook</h4>
+                        <p>General Manager</p>
+                    </div>
+                     <div class="associate-card animated" style="transition-delay: 0.5s;">
+                        <img src="https://whklfmxjknhucguzvpob.supabase.co/storage/v1/object/public/author_avatars/avatar-1759573199178-_MG_6207.JPG" alt="Sayyaf Pukayoor">
+                        <h4>Sayyaf Pukayoor</h4>
+                        <p>Associate Editor</p>
+                    </div>
+                    <div class="associate-card animated" style="transition-delay: 0.6s;">
+                        <img src="https://i.ibb.co/tpLpwgnx/mutswbgyxh6i3eyxspt3.jpg" alt="Hisan Kakkathadam">
+                        <h4>Hisan Kakkathadam</h4>
+                        <p>Executive Manager</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <h2 class="animated">Be Part of The Limelight</h2>
+            <p class="animated" style="transition-delay: 0.2s;">Subscribe to our bimonthly issues, share your thoughts, or contribute your own writing to our publication.</p>
+            <a href="#contact-section" class="cta-button animated" style="transition-delay: 0.4s;">Contact Us</a>
+        </section>
+        
+        <section class="content-section" id="contact-section">
+            <div class="container contact-wrapper">
+                <div class="animated">
+                    <h2 class="section-title">Contact Us</h2>
+                    <div class="info-box">
+                        <div class="info-item">
+                            <strong>Drop us a line:</strong>
+                            <span>thelimelightin@gmail.com</span>
+                        </div>
+                        <div class="info-item">
+                            <strong>Call us any time:</strong>
+                            <span>+91 8136875462</span>
+                        </div>
+                        <div class="info-item">
+                            <strong>Visit us at:</strong>
+                            <span>Shamsul Huda Islamic Academy, Kuttikkattoor</span>
+                        </div>
+                    </div>
+                    <form id="contactForm" class="contact-form">
+                        <input type="text" id="name" class="form-control" placeholder="Your Name" required>
+                        <input type="email" id="email" class="form-control" placeholder="Email Address" required>
+                        <textarea id="message" class="form-control" placeholder="Your Message" rows="5" required></textarea>
+                        <button type="submit" class="submit-btn">Send Message</button>
+                    </form>
+                    <div class="follow-box">
+                        <strong>Follow us</strong>
+                         <div class="social-share">
+                            <a href="https://www.instagram.com/the_limelight_bimonthly/" aria-label="Instagram" target="_blank"><i class="fab fa-instagram"></i></a>
+                            <a href="https://thelimelightonline.in" aria-label="Website" target="_blank"><i class="fas fa-globe"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-grid">
+            <div class="footer-about">
+                <h3 class="footer-logo">THE LIMELIGHT</h3>
+                <p>A bimonthly academic web magazine for critical inquiry, creative reflection, and interdisciplinary engagement.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Categories</h4>
+                <ul id="footerCategoryNav"></ul>
+            </div>
+            <div class="footer-links">
+                <h4>Help & Support</h4>
+                <ul id="footerSupportNav"></ul>
+            </div>
+            <div class="footer-subscribe">
+                <h4>Email Newsletter</h4>
+                <p>Subscribe to receive notifications on our exclusive posts and shares.</p>
+                <form id="footerSubscribeForm">
+                    <input type="email" placeholder="Your Email" required>
+                    <button type="submit">SUBSCRIBE</button>
+                </form>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>Copyright © 2025. The Limelight Online. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://whklfmxjknhucguzvpob.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indoa2xmbXhqa25odWNndXp2cG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyOTY5MjIsImV4cCI6MjA3Mzg3MjkyMn0.5Y2an8aYFc5wY64VmRJmnblYBPwLLs_CR9UXJ4XuzjM';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function fetchCategories() {
+            const { data: categories, error } = await supabaseClient.from('categories').select('*').is('parent_id', null).order('name');
+            if (error) { console.error('Error fetching categories:', error); return; }
+            
+            const navItems = await Promise.all(categories.map(async (category) => {
+                const { data: subcategories } = await supabaseClient.from('categories').select('*').eq('parent_id', category.id).order('name');
+                return { category, subcategories: subcategories || [] };
+            }));
+            
+            const nav = document.getElementById('categoryNav');
+            const footerNav = document.getElementById('footerCategoryNav');
+            let navHtml = `<li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>`;
+            let footerNavHtml = `<li><a href="index.html">Home</a></li>`;
+            
+            navItems.forEach(item => {
+                navHtml += `
+                    <li class="nav-item">
+                        <a href="index.html?categories=${item.category.slug}" class="nav-link">${item.category.name}${item.subcategories.length > 0 ? '<i class="fas fa-chevron-down"></i>' : ''}</a>
+                        ${item.subcategories.length > 0 ? `<div class="dropdown">${item.subcategories.map(sub => `<a href="index.html?categories=${sub.slug}" class="dropdown-item">${sub.name}</a>`).join('')}</div>` : ''}
+                    </li>`;
+                footerNavHtml += `<li><a href="index.html?categories=${item.category.slug}">${item.category.name}</a></li>`;
+            });
+
+            navHtml += `<li class="nav-item"><a href="authors.html" class="nav-link">Authors</a></li>
+                        <li class="nav-item"><a href="contact.html" class="nav-link">Contact</a></li>`;
+            nav.innerHTML = navHtml;
+            footerNav.innerHTML = footerNavHtml;
+        }
+
+        async function fetchFooterLinks() {
+            const { data, error } = await supabaseClient.from('footer_links').select('title, url').order('title');
+            if (error) { console.error("Error fetching footer links:", error); return; }
+            document.getElementById('footerSupportNav').innerHTML = data.map(link => `<li><a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.title}</a></li>`).join('');
+        }
+        
+        document.getElementById('contactForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                message: document.getElementById('message').value,
+                created_at: new Date()
+            };
+            
+            const { error } = await supabaseClient.from('contact_messages').insert([formData]);
+            
+            if (error) {
+                alert('Error sending message: ' + error.message);
+            } else {
+                alert('Thank you for your message! We will get back to you soon.');
+                e.target.reset();
+            }
+        });
+
+        function setupMobileNav() {
+            const toggleBtn = document.querySelector('.mobile-nav-toggle');
+            const navContainer = document.getElementById('navContainer');
+            toggleBtn.addEventListener('click', () => {
+                navContainer.classList.toggle('active');
+            });
+        }
+
+        // Animation on Scroll
+        function setupScrollAnimations() {
+            const animatedElements = document.querySelectorAll('.animated');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            animatedElements.forEach(el => observer.observe(el));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchCategories();
+            fetchFooterLinks();
+            setupMobileNav();
+            setupScrollAnimations();
+        });
+    </script>
+</body>
+</html>
