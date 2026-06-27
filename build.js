@@ -106,7 +106,7 @@ function generateFooterCategoriesHtml(categoriesWithChildren) {
 function generateCarouselHtml(featuredPosts) {
   const slides = featuredPosts.map((p, i) => `
     <div class="carousel-slide ${i === 0 ? 'active' : ''}">
-      <img src="${p.image_url}" class="carousel-image" alt="${escapeQuotes(p.title)}">
+      <img src="${p.image_url}" class="carousel-image" alt="${escapeQuotes(p.title)}" width="1200" height="520" style="aspect-ratio: 1200/520; object-fit: cover;">
       <div class="carousel-overlay">
         <div class="carousel-meta">
           <span>${p.categories?.name || 'General'}</span>
@@ -132,7 +132,7 @@ function generateArticleCardsHtml(latestPosts) {
     <div class="article-card">
       <a href="${href}" class="card-image-wrapper">
         <span class="card-badge">${p.categories?.name || 'General'}</span>
-        <img src="${p.image_url}" class="card-image" loading="lazy" alt="${escapeQuotes(p.title)}">
+        <img src="${p.image_url}" class="card-image" loading="lazy" alt="${escapeQuotes(p.title)}" width="400" height="220" style="aspect-ratio: 400/220; object-fit: cover;">
       </a>
       <div class="card-content">
         <h3 class="card-title"><a href="${href}">${p.title}</a></h3>
@@ -209,7 +209,7 @@ function buildArticleCardsHtml(posts) {
     return `<div class="article-card">
       <a href="/article/${p.slug}/" class="card-image-wrapper">
         <span class="card-badge">${categoryName}</span>
-        <img src="${p.image_url}" class="card-image" loading="lazy" alt="${p.title}">
+        <img src="${p.image_url}" class="card-image" loading="lazy" alt="${p.title}" width="400" height="220" style="aspect-ratio: 400/220; object-fit: cover;">
       </a>
       <div class="card-content">
         <h3 class="card-title"><a href="/article/${p.slug}/">${p.title}</a></h3>
@@ -340,9 +340,61 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </a>\`).join('');
       searchResults.style.display = 'block';
+
     });
     document.addEventListener('click', (e) => {
       if (!e.target.closest('#searchContainer')) searchResults.style.display = 'none';
+    });
+  }
+
+  // Load More Logic
+  const loadMoreBtn = document.getElementById('loadMoreBtn');
+  let currentLoaded = 9;
+  if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', async () => {
+      loadMoreBtn.innerText = 'Loading...';
+      try {
+        if (typeof searchCache === 'undefined' || !searchCache) {
+          const res = await fetch('/search.json');
+          window.searchCache = await res.json();
+        }
+        const cacheToUse = window.searchCache || searchCache;
+        const nextPosts = cacheToUse.slice(currentLoaded, currentLoaded + 9);
+        if (nextPosts.length > 0) {
+          const grid = document.getElementById('articlesGrid');
+          nextPosts.forEach(p => {
+            const d = new Date(p.date);
+            const dateStr = d.toLocaleDateString('en-IN') !== 'Invalid Date' ? d.toLocaleDateString('en-IN') : p.date;
+            const authorName = p.author || 'The Limelight';
+            const authorAvatar = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2230%22 height=%2230%22 viewBox=%220 0 30 30%22%3E%3Crect width=%2230%22 height=%2230%22 fill=%22%238B4513%22/%3E%3Ctext x=%2215%22 y=%2220%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2214%22%3E%3F%3C/text%3E%3C/svg%3E';
+            grid.insertAdjacentHTML('beforeend', \`
+              <div class="article-card">
+                <a href="/article/\${p.slug\}/" class="card-image-wrapper">
+                  <span class="card-badge">\${p.category || 'General'\}</span>
+                  <img src="\${p.image_url\}" class="card-image" loading="lazy" alt="\${p.title\}" width="400" height="220" style="aspect-ratio: 400/220; object-fit: cover;">
+                </a>
+                <div class="card-content">
+                  <h3 class="card-title"><a href="/article/\${p.slug\}/">\${p.title\}</a></h3>
+                  <div class="card-excerpt">\${p.excerpt || ''\}</div>
+                  <div class="card-author">
+                    <img src="\${authorAvatar\}" class="author-avatar" alt="\${authorName\}">
+                    <span>\${authorName\}</span>
+                    <span style="margin-left:auto;">\${dateStr\}</span>
+                  </div>
+                </div>
+              </div>\`);
+          });
+          currentLoaded += nextPosts.length;
+        }
+        if (cacheToUse && currentLoaded >= cacheToUse.length) {
+          loadMoreBtn.style.display = 'none';
+        } else {
+          loadMoreBtn.innerText = 'Load More Articles';
+        }
+      } catch (e) {
+        console.warn('Load more failed', e);
+        loadMoreBtn.innerText = 'Error loading';
+      }
     });
   }
 });
@@ -392,6 +444,7 @@ function generateIndexHtml(data) {
 <meta property="og:url" content="${SITE_URL}/">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://i.ibb.co">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -714,6 +767,9 @@ ${allStyles}
 <main class="main-content">
   <h2 style="text-align:center;font-family:'Playfair Display',serif;color:#8B4513;margin:40px 0 30px;font-size:2rem;">Latest Articles</h2>
   <div class="articles-grid" id="articlesGrid">${cardsHtml}</div>
+  <div style="text-align:center;margin:40px 0;display:flex;justify-content:center;align-items:center;">
+    <button id="loadMoreBtn" style="padding:12px 30px;background:#8B4513;color:white;border:none;border-radius:25px;font-size:1rem;cursor:pointer;font-family:'Roboto',sans-serif;transition:background 0.3s;box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Load More Articles</button>
+  </div>
 </main>
 <footer class="site-footer">
   <div class="footer-grid">
@@ -791,6 +847,287 @@ async function generateCategoryPages(data) {
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 ${allStyles}
+  <style>
+/* ── HEADER LAYOUT FIX ── */
+.site-header {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  width: 100%;
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 10px 20px;
+  gap: 20px;
+}
+
+.logo-link { flex-shrink: 0; }
+.logo-img { height: 55px; width: auto; display: block; }
+
+/* ── NAV LAYOUT FIX ── */
+.main-nav { flex: 1; display: flex; justify-content: flex-end; }
+
+.nav-list {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+.nav-item { position: relative; }
+
+.nav-link {
+  display: block;
+  padding: 8px 12px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #333;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  transition: color 0.2s;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+.nav-link:hover { color: #8B4513; }
+
+/* ── DROPDOWN FIX ── */
+.has-dropdown .dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #fff;
+  min-width: 180px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+  border-top: 2px solid #8B4513;
+  z-index: 999;
+  border-radius: 0 0 6px 6px;
+}
+
+.has-dropdown:hover .dropdown { display: block; }
+
+.dropdown-item {
+  display: block;
+  padding: 10px 16px;
+  color: #333;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-family: 'Roboto', sans-serif;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.2s, color 0.2s;
+}
+
+.dropdown-item:hover {
+  background: #fef6f0;
+  color: #8B4513;
+}
+
+.dropdown-item:last-child { border-bottom: none; }
+
+/* ── CAROUSEL FIX ── */
+.featured-section {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: #1a1a1a;
+  margin-top: 0;
+}
+
+.carousel-container {
+  position: relative;
+  width: 100%;
+  height: 520px;
+  overflow: hidden;
+}
+
+.carousel-slide {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+}
+
+.carousel-slide.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.carousel-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.carousel-overlay {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.85));
+  padding: 40px 40px 30px;
+  color: white;
+}
+
+.carousel-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.carousel-category {
+  background: #8B4513;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.carousel-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 10px;
+  color: white;
+}
+
+.carousel-excerpt {
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.85);
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  font-size: 1rem;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-btn:hover { background: rgba(255,255,255,0.4); }
+.carousel-prev { left: 15px; }
+.carousel-next { right: 15px; }
+
+.carousel-indicators {
+  position: absolute;
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.indicator {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.indicator.active { background: white; }
+
+/* ── MOBILE NAV TOGGLE ── */
+.mobile-nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  color: #333;
+  cursor: pointer;
+  padding: 5px;
+  z-index: 1001;
+}
+
+/* ── MOBILE STYLES ── */
+@media (max-width: 992px) {
+  .mobile-nav-toggle { display: flex; align-items: center; }
+
+  .main-nav { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 998; }
+
+  .main-nav.active, .nav-list.active ~ * { display: block; }
+
+  .nav-list {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px 0;
+    gap: 0;
+  }
+
+  .nav-list.active { display: flex; }
+  .nav-list:not(.active) { display: none; }
+
+  .nav-link {
+    padding: 12px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.9rem;
+  }
+
+  .has-dropdown .dropdown {
+    position: static;
+    box-shadow: none;
+    border-top: none;
+    border-left: 3px solid #8B4513;
+    margin-left: 20px;
+    display: none;
+    border-radius: 0;
+  }
+
+  .has-dropdown.mobile-open .dropdown { display: block; }
+
+  .carousel-container { height: 300px; }
+  .carousel-title { font-size: 1.3rem; }
+  .carousel-overlay { padding: 20px 15px 15px; }
+
+  .header-inner { padding: 10px 15px; position: relative; }
+  .main-nav { position: absolute; top: 100%; }
+}
+
+@media (max-width: 480px) {
+  .carousel-container { height: 250px; }
+  .carousel-title { font-size: 1.1rem; }
+  .logo-img { height: 40px; }
+}
+</style>
 </head>
 <body>
 <header class="site-header">
