@@ -805,8 +805,11 @@ __SCRIPTS_PLACEHOLDER__
 
 // ─── Phase 2: generateCategoryPages ───────────────────────────────────────────
 
+// REPLACE the entire generateCategoryPages function (around line 808) with this fixed version
+
 async function generateCategoryPages(data) {
   const { categoriesWithChildren, allPosts } = data;
+  
   // Read styles ONCE outside the loop for performance
   const originalIndex = fs.readFileSync('index.html', 'utf-8');
   const styleContents = [];
@@ -828,367 +831,208 @@ async function generateCategoryPages(data) {
   fs.mkdirSync('dist/category', { recursive: true });
 
   for (const category of allCategories) {
-    const categoryPosts = allPosts.filter(p =>
-      p.categories?.slug === category.slug || p.categories?.name === category.name
-    );
+    // FIX: Filter posts by category_id (number) NOT by the joined categories object
+    // Each post has a category_id field that links to categories table
+    const categoryPosts = allPosts.filter(p => {
+      // Check if post's category_id matches this category's id
+      return p.category_id === category.id;
+    });
+
     const navHtml = buildNavHtml(categoriesWithChildren);
     const cardsHtml = buildArticleCardsHtml(categoryPosts);
+    const pageTitle = `${category.name} - Articles`;
+    const pageDescription = `Read all articles in ${category.name} on The Limelight Online`;
 
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${category.name} | The Limelight</title>
-<meta name="description" content="Articles about ${category.name} - The Limelight Online">
+<title>${pageTitle} | The Limelight</title>
+<meta name="description" content="${pageDescription}">
+<meta property="og:title" content="${pageTitle}">
+<meta property="og:description" content="${pageDescription}">
+<meta property="og:url" content="${SITE_URL}/category/${category.slug}.html">
+<meta property="og:type" content="website">
 <link rel="canonical" href="${SITE_URL}/category/${category.slug}.html">
+<meta name="robots" content="index, follow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 ${allStyles}
-  <style>
-/* ── HEADER LAYOUT FIX ── */
-.site-header {
-  position: sticky;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  width: 100%;
+<style>
+/* ── CATEGORY PAGE STYLES ── */
+.category-header {
+  background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+  color: white;
+  padding: 40px 20px;
+  text-align: center;
+  margin-bottom: 40px;
 }
 
-.header-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.category-header h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.5rem;
+  margin: 0;
+  margin-bottom: 10px;
+}
+
+.category-header p {
+  font-size: 1.1rem;
+  margin: 0;
+  opacity: 0.95;
+}
+
+.articles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 30px;
   max-width: 1300px;
   margin: 0 auto;
-  padding: 10px 20px;
-  gap: 20px;
+  padding: 0 20px 60px;
 }
 
-.logo-link { flex-shrink: 0; }
-.logo-img { height: 55px; width: auto; display: block; }
-
-/* ── NAV LAYOUT FIX ── */
-.main-nav { flex: 1; display: flex; justify-content: flex-end; }
-
-.nav-list {
-  display: flex;
-  align-items: center;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  gap: 4px;
-  flex-wrap: nowrap;
+.article-card {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.nav-item { position: relative; }
+.article-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+}
 
-.nav-link {
-  display: block;
-  padding: 8px 12px;
-  font-family: 'Roboto', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 500;
+.article-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.article-content {
+  padding: 20px;
+}
+
+.article-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  margin: 0 0 10px 0;
+  line-height: 1.3;
+}
+
+.article-title a {
   color: #333;
   text-decoration: none;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
   transition: color 0.2s;
-  cursor: pointer;
-  border: none;
-  background: none;
 }
 
-.nav-link:hover { color: #8B4513; }
-
-/* ── DROPDOWN FIX ── */
-.has-dropdown .dropdown {
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  background: #fff;
-  min-width: 180px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.12);
-  border-top: 2px solid #8B4513;
-  z-index: 999;
-  border-radius: 0 0 6px 6px;
-}
-
-.has-dropdown:hover .dropdown { display: block; }
-
-.dropdown-item {
-  display: block;
-  padding: 10px 16px;
-  color: #333;
-  text-decoration: none;
-  font-size: 0.85rem;
-  font-family: 'Roboto', sans-serif;
-  border-bottom: 1px solid #f0f0f0;
-  transition: background 0.2s, color 0.2s;
-}
-
-.dropdown-item:hover {
-  background: #fef6f0;
+.article-title a:hover {
   color: #8B4513;
 }
 
-.dropdown-item:last-child { border-bottom: none; }
-
-/* ── CAROUSEL FIX ── */
-.featured-section {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-  background: #1a1a1a;
-  margin-top: 0;
-}
-
-.carousel-container {
-  position: relative;
-  width: 100%;
-  height: 520px;
-  overflow: hidden;
-}
-
-.carousel-slide {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  opacity: 0;
-  transition: opacity 0.6s ease;
-  pointer-events: none;
-}
-
-.carousel-slide.active {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.carousel-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.carousel-overlay {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  background: linear-gradient(transparent, rgba(0,0,0,0.85));
-  padding: 40px 40px 30px;
-  color: white;
-}
-
-.carousel-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.carousel-category {
-  background: #8B4513;
-  color: white;
-  padding: 3px 10px;
-  border-radius: 3px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.carousel-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 2rem;
-  font-weight: 700;
-  line-height: 1.3;
-  margin: 0 0 10px;
-  color: white;
-}
-
-.carousel-excerpt {
+.article-excerpt {
   font-size: 0.95rem;
-  color: rgba(255,255,255,0.85);
-  line-height: 1.6;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  color: #666;
+  margin: 10px 0;
+  line-height: 1.5;
 }
 
-.carousel-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(255,255,255,0.2);
-  border: none;
-  color: white;
-  width: 44px; height: 44px;
-  border-radius: 50%;
-  font-size: 1rem;
-  cursor: pointer;
-  z-index: 10;
-  transition: background 0.2s;
+.article-meta {
+  font-size: 0.85rem;
+  color: #999;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-top: 12px;
 }
 
-.carousel-btn:hover { background: rgba(255,255,255,0.4); }
-.carousel-prev { left: 15px; }
-.carousel-next { right: 15px; }
+.no-articles {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+}
 
-.carousel-indicators {
-  position: absolute;
-  bottom: 15px;
-  left: 50%;
-  transform: translateX(-50%);
+.no-articles h2 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.no-articles p {
+  font-size: 1.1rem;
+}
+
+/* Ensure footer stays at bottom */
+body {
   display: flex;
-  gap: 8px;
-  z-index: 10;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-.indicator {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.5);
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.indicator.active { background: white; }
-
-/* ── MOBILE NAV TOGGLE ── */
-.mobile-nav-toggle {
-  display: none;
-  background: none;
-  border: none;
-  font-size: 1.4rem;
-  color: #333;
-  cursor: pointer;
-  padding: 5px;
-  z-index: 1001;
-}
-
-/* ── MOBILE STYLES ── */
-@media (max-width: 992px) {
-  .mobile-nav-toggle { display: flex; align-items: center; }
-
-  .main-nav { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 998; }
-
-  .main-nav.active, .nav-list.active ~ * { display: block; }
-
-  .nav-list {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 10px 0;
-    gap: 0;
-  }
-
-  .nav-list.active { display: flex; }
-  .nav-list:not(.active) { display: none; }
-
-  .nav-link {
-    padding: 12px 20px;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 0.9rem;
-  }
-
-  .has-dropdown .dropdown {
-    position: static;
-    box-shadow: none;
-    border-top: none;
-    border-left: 3px solid #8B4513;
-    margin-left: 20px;
-    display: none;
-    border-radius: 0;
-  }
-
-  .has-dropdown.mobile-open .dropdown { display: block; }
-
-  .carousel-container { height: 300px; }
-  .carousel-title { font-size: 1.3rem; }
-  .carousel-overlay { padding: 20px 15px 15px; }
-
-  .header-inner { padding: 10px 15px; position: relative; }
-  .main-nav { position: absolute; top: 100%; }
-}
-
-@media (max-width: 480px) {
-  .carousel-container { height: 250px; }
-  .carousel-title { font-size: 1.1rem; }
-  .logo-img { height: 40px; }
+main {
+  flex: 1;
 }
 </style>
 </head>
 <body>
+
 <header class="site-header">
-  <div class="header-inner">
-    <a href="/index.html" class="logo-link">
-      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight" class="logo-img">
-    </a>
-    <button class="mobile-nav-toggle"><i class="fas fa-bars"></i></button>
-    <nav class="main-nav">
-      <ul class="nav-list">${navHtml}</ul>
-    </nav>
-  </div>
+  ${navHtml}
 </header>
-<main class="main-content" style="padding:40px 20px;max-width:1200px;margin:0 auto;">
-  <h1 style="font-family:'Playfair Display',serif;color:#8B4513;font-size:2rem;">${category.name}</h1>
-  <p style="color:#666;margin-top:8px;">${categoryPosts.length} article${categoryPosts.length !== 1 ? 's' : ''}</p>
-  <hr style="border:1px solid #e0e0e0;margin:15px 0 30px;">
+
+<main>
+  <div class="category-header">
+    <h1>${category.name}</h1>
+    <p>${categoryPosts.length} article${categoryPosts.length !== 1 ? 's' : ''}</p>
+  </div>
+
   ${categoryPosts.length > 0
     ? `<div class="articles-grid">${cardsHtml}</div>`
-    : `<div style="text-align:center;padding:60px 20px;color:#888;">
-        <i class="fas fa-newspaper" style="font-size:3rem;display:block;margin-bottom:20px;"></i>
-        <p>No articles in this category yet.</p>
-        <a href="/index.html" style="color:#8B4513;">Back to Home</a>
-      </div>`}
+    : `<div class="no-articles">
+        <h2>No Articles Yet</h2>
+        <p>There are no published articles in this category yet. Check back soon!</p>
+      </div>`
+  }
 </main>
+
 <footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-section">
+      <h3>THE LIMELIGHT</h3>
+      <p>Insightful articles, captivating stories, and in-depth analysis on a variety of topics that matter.</p>
+    </div>
+    <div class="footer-section">
+      <h3>Categories</h3>
+      <ul>
+        ${allCategories
+          .filter(c => !c.parent_id) // Only show parent categories in footer
+          .map(c => `<li><a href="/category/${c.slug}.html">${c.name}</a></li>`)
+          .join('')}
+      </ul>
+    </div>
+    <div class="footer-section">
+      <h3>Support</h3>
+      <ul>
+        <li><a href="/contact.html">Contact</a></li>
+        <li><a href="/sitemap.xml">Sitemap</a></li>
+      </ul>
+    </div>
+  </div>
   <div class="footer-bottom">
-    <p>&copy; ${new Date().getFullYear()} The Limelight Online. All rights reserved.</p>
+    <p>&copy; 2025 The Limelight Online. All rights reserved.</p>
   </div>
 </footer>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const toggle = document.querySelector('.mobile-nav-toggle');
-  const navList = document.querySelector('.nav-list');
-  if (toggle && navList) {
-    toggle.addEventListener('click', () => {
-      navList.classList.toggle('active');
-      const icon = toggle.querySelector('i');
-      if (icon) { icon.classList.toggle('fa-bars'); icon.classList.toggle('fa-times'); }
-    });
-  }
-  document.querySelectorAll('.has-dropdown').forEach(item => {
-    const link = item.querySelector('.nav-link');
-    if (!link) return;
-    link.addEventListener('click', (e) => {
-      if (window.innerWidth <= 992) {
-        e.preventDefault();
-        item.classList.toggle('mobile-open');
-      }
-    });
-  });
-});
-</script>
+
 </body>
 </html>`;
 
-    fs.writeFileSync(path.join('dist', 'category', `${category.slug}.html`), html);
-    console.log(`✓ Category: /category/${category.slug}.html`);
+    const filePath = path.join('dist', 'category', `${category.slug}.html`);
+    fs.writeFileSync(filePath, html);
+    console.log(`✓ Category: /category/${category.slug}.html (${categoryPosts.length} posts)`);
   }
 }
-
 // ─── Phase 3: Article Template Validation ─────────────────────────────────────
 
 function validateArticleTemplate(template) {
