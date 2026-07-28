@@ -5,34 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- DYNAMIC SEO PLACEHOLDERS -->
-    <title>__SEO_TITLE__ | The Limelight</title>
-    <meta name="description" content="__SEO_DESC__">
-    <meta name="author" content="__SEO_AUTHOR__">
-
-    <!-- Open Graph / Facebook / WhatsApp -->
-    <meta property="og:type" content="article">
-    <meta property="og:url" content="__SEO_URL__">
-    <meta property="og:title" content="__SEO_TITLE__">
-    <meta property="og:description" content="__SEO_DESC__">
-    <meta property="og:image" content="__SEO_IMAGE__">
-    
-    <!-- WhatsApp Requirements: Dimensions & Type hints -->
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:image:type" content="image/jpeg">
-
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:title" content="__SEO_TITLE__">
-    <meta property="twitter:description" content="__SEO_DESC__">
-    <meta property="twitter:image" content="__SEO_IMAGE__">
-
-    <!-- Schema.org / WhatsApp Fallback -->
-    <meta itemprop="name" content="__SEO_TITLE__">
-    <meta itemprop="description" content="__SEO_DESC__">
-    <meta itemprop="image" content="__SEO_IMAGE__">
-
-    <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co/WN46nq9w/favicon-32x32.png">
+    __SEO_HEAD_TAGS__
+        <link rel="icon" type="image/png" sizes="96x96" href="/favicon/favicon-96x96.png">
+    <link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg">
+    <link rel="shortcut icon" href="/favicon/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-title" content="The Limelight">
+    <link rel="manifest" href="/favicon/site.webmanifest">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
@@ -162,6 +141,305 @@
             padding: 20px;
         }
 
+        /* ── Quill Alignment (class-based — Quill 1.3.6 default) ── */
+        .article-body .ql-align-center { text-align: center; }
+        .article-body .ql-align-right  { text-align: right;  }
+        .article-body .ql-align-justify { text-align: justify; }
+
+        /* ── Inline-style alignment fallback (imageResize module) ── */
+        .article-body [style*="text-align: center"] { text-align: center; }
+        .article-body [style*="text-align: right"]  { text-align: right;  }
+        .article-body [style*="text-align: justify"]{ text-align: justify; }
+
+        /* ── Aligned images ── */
+        .article-body img.ql-align-center,
+        .article-body p.ql-align-center img,
+        .article-body [style*="text-align: center"] img {
+            display: block; margin-left: auto; margin-right: auto;
+        }
+        .article-body img[style*="float: right"],
+        .article-body .ql-align-right img {
+            float: right; margin: 0 0 15px 20px;
+        }
+        .article-body img[style*="float: left"],
+        .article-body .ql-align-left img {
+            float: left; margin: 0 20px 15px 0;
+        }
+
+        /* ── Figure / Caption ── */
+        .article-body figure,
+        .article-body figure.article-figure {
+            margin: 30px 0;
+            text-align: center;
+        }
+        .article-body figure img {
+            max-width: 100%;
+            border-radius: 4px;
+            margin: 0 auto;
+            height: auto;
+        }
+        .article-body figcaption {
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.85rem;
+            font-style: italic;
+            color: #777;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+
+        /* ── Scholarly Style Presets ── */
+        .article-body .ql-byline {
+            font-style: italic;
+            color: #666;
+            text-align: center;
+            font-size: 1.05rem;
+            margin-bottom: 2em;
+            display: block;
+        }
+        .article-body .ql-section-head {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 1.1rem;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 8px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            display: block;
+        }
+        .article-body .ql-pull-quote {
+            font-size: 1.4rem;
+            font-style: italic;
+            text-align: center;
+            color: #555;
+            border-top: 2px solid var(--accent-color);
+            border-bottom: 2px solid var(--accent-color);
+            padding: 25px 30px;
+            margin: 35px 20px;
+            line-height: 1.6;
+            display: block;
+        }
+        .article-body .ql-ref-entry {
+            font-size: 0.9rem;
+            padding-left: 2em;
+            text-indent: -2em;
+            margin-bottom: 0.8em;
+            line-height: 1.5;
+            color: #444;
+            display: block;
+        }
+        .article-body .ql-ref-region {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--accent-color);
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        /* ── Related Articles Block ── */
+        .related-section {
+            margin: 60px 0 40px;
+            border-top: 2px solid var(--border-color);
+            padding-top: 40px;
+        }
+        .related-heading {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            color: var(--accent-color);
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .related-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .related-card {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+            background: var(--primary-bg);
+        }
+        .related-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        }
+        .related-card-img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            display: block;
+        }
+        .related-card-body {
+            padding: 12px 14px;
+        }
+        .related-card-category {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-color);
+            margin-bottom: 6px;
+        }
+        .related-card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 600;
+            display: block;
+        }
+        .related-card-title:hover { color: var(--accent-color); }
+
+        /* ── Author Bio Card (bottom of article) ── */
+        .author-bio-card {
+            margin: 40px 0 60px;
+            padding: 35px 30px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            text-align: center;
+            background: var(--secondary-bg);
+        }
+        .author-bio-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #999;
+            margin-bottom: 15px;
+        }
+        .author-bio-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 15px;
+            border: 3px solid var(--accent-color);
+            display: block;
+        }
+        .author-bio-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-color);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .author-bio-name:hover { color: var(--accent-color); }
+        .author-bio-text {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        /* ── Reading Time ── */
+        .reading-time {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        /* ── Dark Mode Toggle Button ── */
+        .theme-toggle {
+            background: none;
+            border: 1.5px solid var(--border-color);
+            border-radius: 20px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+        .theme-toggle .icon-dark { display: none; }
+        .theme-toggle .icon-light { display: inline; }
+        [data-theme="dark"] .theme-toggle .icon-dark { display: inline; }
+        [data-theme="dark"] .theme-toggle .icon-light { display: none; }
+
+        /* ── Dark Mode ── */
+        :root {
+            --dm-bg: #121212;
+            --dm-surface: #1e1e1e;
+            --dm-surface2: #2a2a2a;
+            --dm-text: #e4e4e4;
+            --dm-text-muted: #aaaaaa;
+            --dm-border: #333333;
+            --dm-accent: #d4845a;
+        }
+
+        [data-theme="dark"] {
+            --primary-bg: var(--dm-bg);
+            --secondary-bg: var(--dm-surface);
+            --text-color: var(--dm-text);
+            --text-muted: var(--dm-text-muted);
+            --border-color: var(--dm-border);
+            --accent-color: var(--dm-accent);
+            --footer-bg: #0a0a0a;
+        }
+        [data-theme="dark"] body {
+            background-color: #121212;
+            color: #e4e4e4;
+        }
+        [data-theme="dark"] .header {
+            background: #1e1e1e;
+            border-bottom-color: #333;
+        }
+        [data-theme="dark"] .article-body {
+            color: #ddd;
+        }
+        [data-theme="dark"] .article-body h2 {
+            color: var(--dm-accent);
+        }
+        [data-theme="dark"] .article-body blockquote {
+            background: #2a2a2a;
+            color: #bbb;
+            border-left-color: var(--dm-accent);
+        }
+        [data-theme="dark"] .article-body figcaption {
+            color: #999;
+        }
+        [data-theme="dark"] .article-body .ql-pull-quote {
+            color: #bbb;
+            border-top-color: var(--dm-accent);
+            border-bottom-color: var(--dm-accent);
+        }
+        [data-theme="dark"] .article-body .ql-byline,
+        [data-theme="dark"] .article-body .ql-ref-entry { color: #aaa; }
+        [data-theme="dark"] .article-body .ql-section-head,
+        [data-theme="dark"] .article-body .ql-ref-region {
+            color: var(--dm-accent);
+            border-color: var(--dm-accent);
+        }
+        [data-theme="dark"] .article-meta { border-color: #333; color: #aaa; }
+        [data-theme="dark"] .toc-list a { color: #999; }
+        [data-theme="dark"] .toc-list a.active { color: var(--dm-accent); border-right-color: var(--dm-accent); }
+        [data-theme="dark"] .related-card { background: #1e1e1e; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+        [data-theme="dark"] .related-card-title { color: #e4e4e4; }
+        [data-theme="dark"] .related-heading { color: var(--dm-accent); }
+        [data-theme="dark"] .author-bio-card { background: #1e1e1e; border-color: #333; }
+        [data-theme="dark"] .author-bio-name { color: #e4e4e4; }
+        [data-theme="dark"] .author-bio-text { color: #aaa; }
+        [data-theme="dark"] .site-footer { background: #0a0a0a; }
+        [data-theme="dark"] a { color: inherit; }
+        [data-theme="dark"] a:hover { color: var(--dm-accent); }
+
         /* --- Sidebars (Desktop) --- */
         .left-sidebar { position: sticky; top: 100px; text-align: right; }
         .toc-title { font-size: 0.85rem; text-transform: uppercase; color: #999; margin-bottom: 15px; letter-spacing: 1px; }
@@ -209,7 +487,27 @@
         @media (min-width: 993px) {
             .mobile-share-bar { display: none; }
         }
+
+        /* Related grid — mobile */
+        @media (max-width: 768px) {
+            .related-grid { grid-template-columns: 1fr; gap: 15px; }
+            .related-card-img { height: 180px; }
+        }
+        @media (min-width: 480px) and (max-width: 768px) {
+            .related-grid { grid-template-columns: repeat(2, 1fr); }
+        }
     </style>
+    <!-- Dark mode: apply saved theme before first paint to avoid flash -->
+    <script>
+        (function() {
+            var saved = localStorage.getItem('limelight-theme');
+            if (saved === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else if (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
 </head>
 <body>
 
@@ -219,7 +517,10 @@
             <a href="/index.html" class="site-logo">
                 <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight">
             </a>
-            <div style="width: 60px;"></div> <!-- Spacer -->
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                <i class="fas fa-moon icon-dark"></i>
+                <i class="fas fa-sun icon-light"></i>
+            </button>
         </div>
     </header>
 
@@ -369,6 +670,21 @@
             document.getElementById('mShareTw').href = tw;
             document.getElementById('mShareWa').href = wa;
         }
+        // Dark mode toggle
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                if (isDark) {
+                    document.documentElement.removeAttribute('data-theme');
+                    localStorage.setItem('limelight-theme', 'light');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('limelight-theme', 'dark');
+                }
+            });
+        }
     </script>
 </body>
 </html>
+

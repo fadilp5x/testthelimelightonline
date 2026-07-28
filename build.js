@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY;
 const SITE_URL = process.env.SITE_URL || 'https://thelimelightonline.in';
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
@@ -18,10 +18,269 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const escapeQuotes = (str) => str ? str.replace(/"/g, '&quot;') : '';
 const escapeJs = (str) => str
-  ? str.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$')
+  ? str.replace(/\\/g, '\\\\').replace(/`/g, '\`').replace(/\$/g, '\\$')
   : '';
 // Must match the safeSlug used when writing files to dist/article/
 const normalizeSlug = (slug) => slug.replace(/[^a-z0-9\-]/gi, '-').toLowerCase();
+
+function calcReadingTime(htmlContent) {
+  const text = (htmlContent || '').replace(/<[^>]+>/g, ' ');
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.ceil(words / 200));
+}
+
+function getDarkModeInitScript() {
+  return `<script>
+(function() {
+  var saved = localStorage.getItem('limelight-theme');
+  if (saved === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else if (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+})();
+<\/script>`;
+}
+
+function getDarkModeCSS() {
+  return `
+<style>
+:root {
+  --dm-bg: #121212; --dm-surface: #1e1e1e; --dm-surface2: #2a2a2a;
+  --dm-text: #e4e4e4; --dm-text-muted: #aaaaaa; --dm-border: #333333;
+  --dm-accent: #d4845a;
+}
+[data-theme="dark"] {
+  --accent-color: #d4845a; --text-color: #e4e4e4; --border-color: #333;
+  --card-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+[data-theme="dark"] body { background-color: #121212; color: #e4e4e4; }
+[data-theme="dark"] .header, [data-theme="dark"] .site-header { background: #1e1e1e !important; border-bottom-color: #333 !important; }
+[data-theme="dark"] .nav-link, [data-theme="dark"] .nav-menu a { color: #ccc !important; }
+[data-theme="dark"] .nav-link:hover { color: #d4845a !important; }
+[data-theme="dark"] .dropdown, [data-theme="dark"] .has-dropdown .dropdown { background: #1e1e1e; border-color: #333; }
+[data-theme="dark"] .dropdown-item { color: #ccc; border-bottom-color: #333; }
+[data-theme="dark"] .dropdown-item:hover { background: #2a2a2a; color: #d4845a; }
+[data-theme="dark"] .article-card { background: #1e1e1e; border-color: #333; }
+[data-theme="dark"] .card-title a { color: #e4e4e4; }
+[data-theme="dark"] .card-excerpt { color: #aaa; }
+[data-theme="dark"] .card-author { color: #888; border-top-color: #333; }
+[data-theme="dark"] .site-footer { background: #0a0a0a; }
+[data-theme="dark"] .footer-bottom { border-top-color: #222; }
+[data-theme="dark"] .carousel-overlay { background: linear-gradient(to top, rgba(0,0,0,0.95), transparent); }
+[data-theme="dark"] .category-header { background: linear-gradient(135deg, #6b3510 0%, #7a3f22 100%); }
+[data-theme="dark"] .author-card { background: #1e1e1e; border-color: #333; }
+[data-theme="dark"] .author-bio-card { background: #1e1e1e; border-color: #333; }
+[data-theme="dark"] .author-page-header { background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%); }
+.theme-toggle {
+  background: none; border: 1.5px solid #ccc; border-radius: 20px;
+  padding: 5px 10px; cursor: pointer; font-size: 0.85rem; color: #666;
+  display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;
+}
+.theme-toggle:hover { border-color: #8B4513; color: #8B4513; }
+.theme-toggle .icon-dark { display: none; }
+.theme-toggle .icon-light { display: inline; }
+[data-theme="dark"] .theme-toggle { border-color: #555; color: #ccc; }
+[data-theme="dark"] .theme-toggle:hover { border-color: #d4845a; color: #d4845a; }
+[data-theme="dark"] .theme-toggle .icon-dark { display: inline; }
+[data-theme="dark"] .theme-toggle .icon-light { display: none; }
+/* Homepage card fade-in animation */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .article-card {
+    opacity: 0;
+    animation: fadeSlideUp 0.5s ease forwards;
+  }
+  .article-card:nth-child(1) { animation-delay: 0.05s; }
+  .article-card:nth-child(2) { animation-delay: 0.10s; }
+  .article-card:nth-child(3) { animation-delay: 0.15s; }
+  .article-card:nth-child(4) { animation-delay: 0.20s; }
+  .article-card:nth-child(5) { animation-delay: 0.25s; }
+  .article-card:nth-child(6) { animation-delay: 0.30s; }
+  .article-card:nth-child(7) { animation-delay: 0.35s; }
+  .article-card:nth-child(8) { animation-delay: 0.40s; }
+  .article-card:nth-child(9) { animation-delay: 0.45s; }
+}
+</style>`;
+}
+
+function getDarkModeToggleScript() {
+  return `
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var btn = document.getElementById('themeToggle');
+  if (btn) {
+    btn.addEventListener('click', function() {
+      var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      if (isDark) {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem('limelight-theme', 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('limelight-theme', 'dark');
+      }
+    });
+  }
+});
+<\/script>`;
+}
+
+function getDarkModeToggleBtn() {
+  return `<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <i class="fas fa-moon icon-dark"></i>
+  <i class="fas fa-sun icon-light"></i>
+</button>`;
+}
+
+function getFaviconHtml() {
+  return `
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon/favicon-96x96.png">
+    <link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg">
+    <link rel="shortcut icon" href="/favicon/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-title" content="The Limelight">
+    <link rel="manifest" href="/favicon/site.webmanifest">
+  `;
+}
+
+function getSEOHeadTags({ title, description, keywords, author, url, type, image }) {
+  const defaultImage = `${SITE_URL}/favicon/favicon-512x512.png`;
+  const imgUrl = image || defaultImage;
+  return `
+<title>${title}</title>
+<meta name="description" content="${description}">
+<meta name="keywords" content="${keywords}">
+<meta name="author" content="${author || 'The Limelight Online'}">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+<link rel="canonical" href="${url}">
+
+<!-- Open Graph (Facebook/LinkedIn sharing) -->
+<meta property="og:site_name" content="The Limelight Online">
+<meta property="og:type" content="${type}">
+<meta property="og:title" content="${title}">
+<meta property="og:description" content="${description}">
+<meta property="og:image" content="${imgUrl}">
+<meta property="og:url" content="${url}">
+
+<!-- Twitter Card (X/Twitter sharing) -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${title}">
+<meta name="twitter:description" content="${description}">
+<meta name="twitter:image" content="${imgUrl}">
+<meta name="twitter:site" content="@thelimelightonline">
+  `.trim();
+}
+
+function getOrganizationSchema() {
+  return JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "The Limelight Online",
+    "alternateName": [
+      "The Limelight",
+      "Limelight South",
+      "The Limelight Magazine",
+      "The Limelight Bimonthly Magazine"
+    ],
+    "url": SITE_URL,
+    "logo": `${SITE_URL}/favicon/favicon-192x192.png`,
+    "description": "The Limelight Online is a bimonthly digital magazine covering South Asian literature, essays, arts and culture.",
+    "sameAs": [
+      "https://www.instagram.com/thelimelightonline",
+      "https://twitter.com/thelimelightonline",
+      "https://www.facebook.com/thelimelightonline"
+    ],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "Editorial"
+    }
+  });
+}
+
+function getWebSiteSchema() {
+  return JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "url": SITE_URL,
+    "name": "The Limelight Online",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": `${SITE_URL}/search?q={search_term_string}`,
+      "query-input": "required name=search_term_string"
+    }
+  });
+}
+
+function getBreadcrumbSchema(breadcrumbs) {
+  return JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": breadcrumbs
+  });
+}
+
+function buildRelatedArticlesHtml(currentArticle, allPosts) {
+  // Same category first, exclude current
+  const sameCategory = allPosts.filter(p =>
+    p.category_id === currentArticle.category_id && p.id !== currentArticle.id
+  ).slice(0, 3);
+
+  let related = [...sameCategory];
+
+  // Fill remainder with random posts (no duplicates, no self)
+  if (related.length < 3) {
+    const usedIds = new Set([currentArticle.id, ...related.map(p => p.id)]);
+    const pool = allPosts.filter(p => !usedIds.has(p.id));
+    // Shuffle pool
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    related = [...related, ...pool.slice(0, 3 - related.length)];
+  }
+
+  if (related.length === 0) return '';
+
+  const cards = related.map(p => {
+    const categoryName = p.categories?.name || 'General';
+    return `<a href="/article/${normalizeSlug(p.slug)}/" class="related-card" style="text-decoration:none;display:block;">
+      <img src="${p.image_url || ''}" alt="${escapeQuotes(p.title)}" class="related-card-img" loading="lazy">
+      <div class="related-card-body">
+        <div class="related-card-category">${categoryName}</div>
+        <span class="related-card-title">${p.title}</span>
+      </div>
+    </a>`;
+  }).join('\n');
+
+  return `
+  <section class="related-section">
+    <h3 class="related-heading">Related Articles</h3>
+    <div class="related-grid">
+      ${cards}
+    </div>
+  </section>`;
+}
+
+function buildAuthorBioCardHtml(article) {
+  const authorName = article.authors?.full_name || 'The Limelight';
+  const authorAvatar = article.authors?.avatar_url ||
+    'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 80 80%22%3E%3Crect width=%2280%22 height=%2280%22 fill=%22%238B4513%22/%3E%3Ctext x=%2240%22 y=%2252%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2236%22%3E%3F%3C/text%3E%3C/svg%3E';
+  const authorId = article.author_id || '';
+  const authorLink = authorId ? `/author/${authorId}.html` : '#';
+  const bio = article.authors?.bio || '';
+
+  return `
+  <div class="author-bio-card">
+    <div class="author-bio-label">Author</div>
+    <img src="${authorAvatar}" alt="${escapeQuotes(authorName)}" class="author-bio-avatar"
+         onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 80 80%22%3E%3Crect width=%2280%22 height=%2280%22 fill=%22%238B4513%22/%3E%3Ctext x=%2240%22 y=%2252%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2236%22%3E%3F%3C/text%3E%3C/svg%3E'">
+    <a href="${authorLink}" class="author-bio-name">${authorName}</a>
+    ${bio ? `<p class="author-bio-text">${bio}</p>` : ''}
+  </div>`;
+}
 
 // ─── Phase 2: Data Fetching ────────────────────────────────────────────────────
 
@@ -40,9 +299,11 @@ async function fetchAllData() {
     })
   );
 
+  const baseSelect = 'id, title, slug, excerpt, image_url, created_at, updated_at, category_id, author_id, is_featured, authors(full_name, avatar_url, bio), categories(name, slug)';
+
   const { data: featuredPosts, error: e2 } = await supabase
     .from('posts')
-    .select('*, authors(full_name, avatar_url), categories(name, slug)')
+    .select(baseSelect)
     .eq('is_featured', true)
     .order('created_at', { ascending: false })
     .limit(5);
@@ -50,16 +311,22 @@ async function fetchAllData() {
 
   const { data: latestPosts, error: e3 } = await supabase
     .from('posts')
-    .select('*, authors(full_name, avatar_url), categories(name, slug)')
+    .select(baseSelect)
     .order('created_at', { ascending: false })
     .range(0, 8);
   if (e3) throw new Error('Latest posts fetch failed: ' + e3.message);
 
   const { data: allPosts, error: e4 } = await supabase
     .from('posts')
-    .select('*, authors(full_name, avatar_url), categories(name, slug)')
+    .select(baseSelect)
     .order('created_at', { ascending: false });
   if (e4) throw new Error('All posts fetch failed: ' + e4.message);
+
+  const { data: allAuthors, error: e5 } = await supabase
+    .from('authors')
+    .select('*')
+    .order('full_name');
+  if (e5) throw new Error('Authors fetch failed: ' + e5.message);
 
   console.log(
     `Fetched: ${categoriesWithChildren.length} categories, ` +
@@ -67,7 +334,7 @@ async function fetchAllData() {
     `${allPosts.length} total articles`
   );
 
-  return { categoriesWithChildren, featuredPosts, latestPosts, allPosts };
+  return { categoriesWithChildren, featuredPosts, latestPosts, allPosts, allAuthors };
 }
 
 // ─── Phase 2: Homepage Helpers ─────────────────────────────────────────────────
@@ -347,55 +614,72 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Load More Logic
-  const loadMoreBtn = document.getElementById('loadMoreBtn');
+  // Infinite Scroll Logic
+  const sentinel = document.getElementById('scrollSentinel');
   let currentLoaded = 9;
-  if (loadMoreBtn) {
-    loadMoreBtn.addEventListener('click', async () => {
-      loadMoreBtn.innerText = 'Loading...';
-      try {
-        if (typeof searchCache === 'undefined' || !searchCache) {
-          const res = await fetch('/search.json');
-          window.searchCache = await res.json();
-        }
-        const cacheToUse = window.searchCache || searchCache;
-        const nextPosts = cacheToUse.slice(currentLoaded, currentLoaded + 9);
-        if (nextPosts.length > 0) {
-          const grid = document.getElementById('articlesGrid');
-          nextPosts.forEach(p => {
-            const d = new Date(p.date);
-            const dateStr = d.toLocaleDateString('en-IN') !== 'Invalid Date' ? d.toLocaleDateString('en-IN') : p.date;
-            const authorName = p.author || 'The Limelight';
-            const authorAvatar = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2230%22 height=%2230%22 viewBox=%220 0 30 30%22%3E%3Crect width=%2230%22 height=%2230%22 fill=%22%238B4513%22/%3E%3Ctext x=%2215%22 y=%2220%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2214%22%3E%3F%3C/text%3E%3C/svg%3E';
-            grid.insertAdjacentHTML('beforeend', \`
-              <div class="article-card">
-                <a href="/article/\${p.slug\}/" class="card-image-wrapper">
-                  <span class="card-badge">\${p.category || 'General'\}</span>
-                  <img src="\${p.image_url\}" class="card-image" loading="lazy" alt="\${p.title\}" width="400" height="220" style="aspect-ratio: 400/220; object-fit: cover;">
-                </a>
-                <div class="card-content">
-                  <h3 class="card-title"><a href="/article/\${p.slug\}/">\${p.title\}</a></h3>
-                  <div class="card-excerpt">\${p.excerpt || ''\}</div>
-                  <div class="card-author">
-                    <img src="\${authorAvatar\}" class="author-avatar" alt="\${authorName\}">
-                    <span>\${authorName\}</span>
-                    <span style="margin-left:auto;">\${dateStr\}</span>
+  let isLoading = false;
+  
+  if (sentinel) {
+    const observer = new IntersectionObserver(async (entries) => {
+      if (entries[0].isIntersecting && !isLoading) {
+        isLoading = true;
+        sentinel.innerHTML = '<i class="fas fa-circle-notch fa-spin fa-2x" style="color:var(--accent-color); margin-top:20px;"></i>';
+        
+        try {
+          if (typeof searchCache === 'undefined' || !searchCache) {
+            const res = await fetch('/search.json');
+            window.searchCache = await res.json();
+          }
+          const cacheToUse = window.searchCache || searchCache;
+          const nextPosts = cacheToUse.slice(currentLoaded, currentLoaded + 9);
+          
+          if (nextPosts.length > 0) {
+            // Simulate slight network delay for the animation to look good
+            await new Promise(r => setTimeout(r, 400));
+            
+            const grid = document.getElementById('articlesGrid');
+            nextPosts.forEach((p, index) => {
+              const d = new Date(p.date);
+              const dateStr = d.toLocaleDateString('en-IN') !== 'Invalid Date' ? d.toLocaleDateString('en-IN') : p.date;
+              const authorName = p.author || 'The Limelight';
+              const authorAvatar = p.authors?.avatar_url || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2230%22 height=%2230%22 viewBox=%220 0 30 30%22%3E%3Crect width=%2230%22 height=%2230%22 fill=%22%238B4513%22/%3E%3Ctext x=%2215%22 y=%2220%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2214%22%3E%3F%3C/text%3E%3C/svg%3E';
+              
+              const delay = (index * 0.05).toFixed(2);
+              
+              grid.insertAdjacentHTML('beforeend', \`
+                <div class="article-card" style="animation-delay: \${delay}s; animation-fill-mode: both; opacity: 0; animation-name: fadeSlideUp; animation-duration: 0.5s; animation-timing-function: ease;">
+                  <a href="/article/\${p.slug}/" class="card-image-wrapper">
+                    <span class="card-badge">\${p.category || 'General'}</span>
+                    <img src="\${p.image_url}" class="card-image" loading="lazy" alt="\${p.title}" width="400" height="220" style="aspect-ratio: 400/220; object-fit: cover;">
+                  </a>
+                  <div class="card-content">
+                    <h3 class="card-title"><a href="/article/\${p.slug}/">\${p.title}</a></h3>
+                    <div class="card-excerpt">\${p.excerpt || ''}</div>
+                    <div class="card-author">
+                      <img src="\${authorAvatar}" class="author-avatar" alt="\${authorName}">
+                      <span>\${authorName}</span>
+                      <span style="margin-left:auto;">\${dateStr}</span>
+                    </div>
                   </div>
-                </div>
-              </div>\`);
-          });
-          currentLoaded += nextPosts.length;
+                </div>\`);
+            });
+            currentLoaded += nextPosts.length;
+          }
+          
+          if (cacheToUse && currentLoaded >= cacheToUse.length) {
+            sentinel.style.display = 'none';
+            observer.disconnect();
+          } else {
+            sentinel.innerHTML = '';
+          }
+        } catch (e) {
+          console.warn('Load more failed', e);
+          sentinel.innerHTML = 'Error loading articles.';
         }
-        if (cacheToUse && currentLoaded >= cacheToUse.length) {
-          loadMoreBtn.style.display = 'none';
-        } else {
-          loadMoreBtn.innerText = 'Load More Articles';
-        }
-      } catch (e) {
-        console.warn('Load more failed', e);
-        loadMoreBtn.innerText = 'Error loading';
+        isLoading = false;
       }
     });
+    observer.observe(sentinel);
   }
 });
 </script>`;
@@ -435,20 +719,22 @@ function generateIndexHtml(data) {
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Limelight | Home</title>
-<meta name="description" content="The Limelight Online - Literature, Essays, Arts and Culture">
-<link rel="canonical" href="${SITE_URL}/">
-<meta property="og:title" content="The Limelight Online">
-<meta property="og:url" content="${SITE_URL}/">
-<meta property="og:type" content="website">
+${getSEOHeadTags({
+  title: 'The Limelight | Home',
+  description: 'The Limelight Online - Literature, Essays, Arts and Culture',
+  keywords: 'South Asian literature, essays, culture, Limelight Online',
+  url: `${SITE_URL}/`,
+  type: 'website'
+})}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://i.ibb.co">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+${getFaviconHtml()}
 ${allStyles}
+${getDarkModeCSS()}
+
 
 <style>
 /* ── HEADER LAYOUT FIX ── */
@@ -731,7 +1017,9 @@ ${allStyles}
   .logo-img { height: 40px; }
 }
 </style>
-
+${getDarkModeInitScript()}
+<script type="application/ld+json">${getOrganizationSchema()}</script>
+<script type="application/ld+json">${getWebSiteSchema()}</script>
 </head>
 <body>
 <header class="site-header">
@@ -745,6 +1033,7 @@ ${allStyles}
     <nav class="main-nav">
       <ul class="nav-list" id="navMenu">
         ${navItemsHtml}
+        <li class="nav-item">${getDarkModeToggleBtn()}</li>
         <li class="nav-item">
           <div class="search-container" id="searchContainer">
             <i class="fas fa-search search-icon" id="searchIcon"></i>
@@ -767,8 +1056,7 @@ ${allStyles}
 <main class="main-content">
   <h2 style="text-align:center;font-family:'Playfair Display',serif;color:#8B4513;margin:40px 0 30px;font-size:2rem;">Latest Articles</h2>
   <div class="articles-grid" id="articlesGrid">${cardsHtml}</div>
-  <div style="text-align:center;margin:40px 0;display:flex;justify-content:center;align-items:center;">
-    <button id="loadMoreBtn" style="padding:12px 30px;background:#8B4513;color:white;border:none;border-radius:25px;font-size:1rem;cursor:pointer;font-family:'Roboto',sans-serif;transition:background 0.3s;box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Load More Articles</button>
+  <div style="text-align:center;margin:40px 0;display:flex;justify-content:center;align-items:center;" id="scrollSentinel">
   </div>
 </main>
 <footer class="site-footer">
@@ -796,6 +1084,7 @@ ${allStyles}
   </div>
 </footer>
 __SCRIPTS_PLACEHOLDER__
+${getDarkModeToggleScript()}
 </body>
 </html>`;
 
@@ -813,7 +1102,7 @@ async function generateCategoryPages(data) {
   // Read styles ONCE outside the loop for performance
   const originalIndex = fs.readFileSync('index.html', 'utf-8');
   const styleContents = [];
-  const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+  const styleRegex = /<style[^>]*>([\\s\\S]*?)<\/style>/gi;
   let styleMatch;
   while ((styleMatch = styleRegex.exec(originalIndex)) !== null) {
     styleContents.push(styleMatch[1]);
@@ -831,10 +1120,7 @@ async function generateCategoryPages(data) {
   fs.mkdirSync('dist/category', { recursive: true });
 
   for (const category of allCategories) {
-    // FIX: Filter posts by category_id (number) NOT by the joined categories object
-    // Each post has a category_id field that links to categories table
     const categoryPosts = allPosts.filter(p => {
-      // Check if post's category_id matches this category's id
       return p.category_id === category.id;
     });
 
@@ -861,6 +1147,7 @@ async function generateCategoryPages(data) {
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 ${allStyles}
+${getDarkModeCSS()}
 <style>
 /* ── CATEGORY PAGE STYLES ── */
 .category-header {
@@ -975,11 +1262,23 @@ main {
   flex: 1;
 }
 </style>
+${getDarkModeInitScript()}
 </head>
 <body>
 
 <header class="site-header">
-  ${navHtml}
+  <div class="header-inner">
+    <a href="/index.html" class="logo-link">
+      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight" class="logo-img">
+    </a>
+    <button class="mobile-nav-toggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+    <nav class="main-nav">
+      <ul class="nav-list" id="navMenu">
+        ${navHtml}
+        <li class="nav-item">${getDarkModeToggleBtn()}</li>
+      </ul>
+    </nav>
+  </div>
 </header>
 
 <main>
@@ -1024,7 +1323,7 @@ main {
     <p>&copy; 2025 The Limelight Online. All rights reserved.</p>
   </div>
 </footer>
-
+${getDarkModeToggleScript()}
 </body>
 </html>`;
 
@@ -1033,11 +1332,165 @@ main {
     console.log(`✓ Category: /category/${category.slug}.html (${categoryPosts.length} posts)`);
   }
 }
+async function generateAuthorPages(data) {
+  const { categoriesWithChildren, allPosts, allAuthors } = data;
+  if (!allAuthors || allAuthors.length === 0) {
+    console.log('No authors found, skipping author pages');
+    return;
+  }
+
+  const originalIndex = fs.readFileSync('index.html', 'utf-8');
+  const styleContents = [];
+  const styleRegex = /<style[^>]*>([\\s\\S]*?)<\/style>/gi;
+  let styleMatch;
+  while ((styleMatch = styleRegex.exec(originalIndex)) !== null) {
+    styleContents.push(styleMatch[1]);
+  }
+  const allStyles = styleContents.length > 0
+    ? `<style>\n${styleContents.join('\n')}\n</style>`
+    : '';
+
+  fs.mkdirSync('dist/author', { recursive: true });
+  const navHtml = buildNavHtml(categoriesWithChildren);
+
+  for (const author of allAuthors) {
+    const authorPosts = allPosts.filter(p => p.author_id === author.id);
+    const cardsHtml = buildArticleCardsHtml(authorPosts);
+    const authorAvatar = author.avatar_url ||
+      'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 80 80%22%3E%3Crect width=%2280%22 height=%2280%22 fill=%22%238B4513%22/%3E%3Ctext x=%2240%22 y=%2252%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2236%22%3E%3F%3C/text%3E%3C/svg%3E';
+    const pageTitle = `${author.full_name} — Author`;
+    const pageDesc = author.bio ? author.bio.substring(0, 160) : `Read articles by ${author.full_name} on The Limelight Online.`;
+    const authorUrl = `${SITE_URL}/author/${author.id}.html`;
+
+    const jsonLd = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Person',
+      'name': author.full_name,
+      'url': authorUrl,
+      'image': author.avatar_url || '',
+      'description': author.bio || ''
+    });
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${pageTitle} | The Limelight</title>
+<meta name="description" content="${escapeQuotes(pageDesc)}">
+<meta property="og:title" content="${escapeQuotes(pageTitle)}">
+<meta property="og:description" content="${escapeQuotes(pageDesc)}">
+<meta property="og:url" content="${authorUrl}">
+<meta property="og:type" content="profile">
+<meta property="og:image" content="${escapeQuotes(author.avatar_url || '')}">
+<link rel="canonical" href="${authorUrl}">
+<meta name="robots" content="index, follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+${allStyles}
+${getDarkModeCSS()}
+<style>
+.author-page-header {
+  background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+  color: white; padding: 50px 20px; text-align: center;
+}
+.author-page-avatar {
+  width: 100px; height: 100px; border-radius: 50%; object-fit: cover;
+  border: 4px solid rgba(255,255,255,0.5); margin: 0 auto 20px; display: block;
+}
+.author-page-name {
+  font-family: 'Playfair Display', serif; font-size: 2rem;
+  margin: 0 0 10px; color: white;
+}
+.author-page-bio {
+  font-size: 1rem; color: rgba(255,255,255,0.85);
+  max-width: 600px; margin: 0 auto; line-height: 1.6;
+}
+.author-articles-section {
+  max-width: 1300px; margin: 0 auto; padding: 40px 20px 60px;
+}
+.author-articles-heading {
+  font-family: 'Playfair Display', serif; font-size: 1.6rem;
+  color: #8B4513; margin-bottom: 30px;
+}
+.articles-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 30px;
+}
+body { display: flex; flex-direction: column; min-height: 100vh; }
+main { flex: 1; }
+</style>
+${getDarkModeInitScript()}
+</head>
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/index.html" class="logo-link">
+      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight" class="logo-img">
+    </a>
+    <button class="mobile-nav-toggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+    <nav class="main-nav">
+      <ul class="nav-list" id="navMenu">
+        ${navHtml}
+        <li class="nav-item">${getDarkModeToggleBtn()}</li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="author-page-header">
+    <img src="${authorAvatar}" alt="${escapeQuotes(author.full_name)}" class="author-page-avatar"
+         onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 80 80%22%3E%3Crect width=%2280%22 height=%2280%22 fill=%22%238B4513%22/%3E%3Ctext x=%2240%22 y=%2252%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2236%22%3E%3F%3C/text%3E%3C/svg%3E'">
+    <h1 class="author-page-name">${author.full_name}</h1>
+    ${author.bio ? `<p class="author-page-bio">${author.bio}</p>` : ''}
+  </div>
+  <div class="author-articles-section">
+    <h2 class="author-articles-heading">Articles by ${author.full_name} (${authorPosts.length})</h2>
+    ${authorPosts.length > 0
+      ? `<div class="articles-grid">${cardsHtml}</div>`
+      : '<p style="color:#888;text-align:center;padding:40px 0;">No articles published yet.</p>'
+    }
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-col">
+      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight" style="height:50px;margin-bottom:15px;">
+      <p style="color:#ccc;font-size:0.9rem;">Literature, essays, arts and culture.</p>
+    </div>
+    <div class="footer-col">
+      <h4 class="footer-heading">Quick Links</h4>
+      <ul class="footer-links">
+        <li><a href="/index.html">Home</a></li>
+        <li><a href="/authors.html">Authors</a></li>
+        <li><a href="/contact.html">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; ${new Date().getFullYear()} The Limelight Online. All rights reserved.</p>
+  </div>
+</footer>
+${getDarkModeToggleScript()}
+</body>
+</html>`;
+
+    const filePath = `dist/author/${author.id}.html`;
+    fs.writeFileSync(filePath, html);
+    console.log(`✓ Author: /author/${author.id}.html — ${authorPosts.length} articles`);
+  }
+  console.log(`✓ Generated ${allAuthors.length} author pages`);
+}
+
 // ─── Phase 3: Article Template Validation ─────────────────────────────────────
 
 function validateArticleTemplate(template) {
   const checks = [
-    ['__SEO_TITLE__',    'Missing __SEO_TITLE__ placeholder'],
+    ['__SEO_HEAD_TAGS__', 'Missing __SEO_HEAD_TAGS__ placeholder'],
     ['id="mainContent"', 'Missing id="mainContent" element'],
     ['id="tocList"',     'Missing id="tocList" element'],
   ];
@@ -1051,7 +1504,7 @@ function validateArticleTemplate(template) {
 
 // ─── Phase 3: generateArticleHtml ─────────────────────────────────────────────
 
-function generateArticleHtml(article, template) {
+function generateArticleHtml(article, template, allPosts) {
   const authorName   = article.authors?.full_name   || 'The Limelight';
   const authorAvatar = article.authors?.avatar_url   || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2235%22 height=%2235%22 viewBox=%220 0 35 35%22%3E%3Crect width=%2235%22 height=%2235%22 fill=%22%238B4513%22/%3E%3Ctext x=%2217%22 y=%2223%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2216%22%3E%3F%3C/text%3E%3C/svg%3E';
   const categoryName = article.categories?.name      || 'General';
@@ -1063,24 +1516,68 @@ function generateArticleHtml(article, template) {
 
   let output = template;
 
-  // SEO placeholder replacements (all occurrences)
-  output = output.replace(/__SEO_TITLE__/g,  escapeQuotes(article.title));
-  output = output.replace(/__SEO_DESC__/g,   escapeQuotes(article.excerpt || ''));
-  output = output.replace(/__SEO_AUTHOR__/g, escapeQuotes(authorName));
-  output = output.replace(/__SEO_URL__/g,    escapeQuotes(articleUrl));
-  output = output.replace(/__SEO_IMAGE__/g,  escapeQuotes(article.image_url || ''));
+  const articleKeywords = `${categoryName}, ${authorName}, South Asian literature, essays, culture, The Limelight Online`;
 
-  // Title tag (already covered by __SEO_TITLE__ above, but ensure tab title is clean)
-  output = output.replace(
-    /<title>[^<]*<\/title>/,
-    `<title>${article.title} | The Limelight</title>`
-  );
+  const seoHeadTags = getSEOHeadTags({
+    title: `${article.title} | The Limelight`,
+    description: article.excerpt || '',
+    keywords: articleKeywords,
+    author: authorName,
+    url: articleUrl,
+    type: 'article',
+    image: article.image_url || ''
+  });
+
+  // Inject our dynamic SEO tags
+  output = output.replace('__SEO_HEAD_TAGS__', seoHeadTags);
 
   // Bake article content — replace the loading spinner div
   // Exact markup from article.html line 242-244:
   //   <div style="padding: 100px 0; text-align: center;">
   //     <i class="fas fa-circle-notch fa-spin fa-2x" style="color:var(--accent-color)"></i>
   //   </div>
+  const readingTime = calcReadingTime(article.content || '');
+  const authorId = article.author_id || '';
+  const authorLink = authorId ? `/author/${authorId}.html` : '#';
+  const relatedHtml = buildRelatedArticlesHtml(article, allPosts || []);
+  const authorBioHtml = buildAuthorBioCardHtml(article);
+
+  const schemaHtml = `
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "NewsArticle",
+      "headline": "${escapeJs(article.title)}",
+      "image": [
+        "${escapeJs(article.image_url || `${SITE_URL}/favicon/favicon-512x512.png`)}"
+       ],
+      "datePublished": "${new Date(article.created_at).toISOString()}",
+      "dateModified": "${article.updated_at ? new Date(article.updated_at).toISOString() : new Date(article.created_at).toISOString()}",
+      "author": [{
+          "@type": "Person",
+          "name": "${escapeJs(authorName)}",
+          "url": "${SITE_URL}${authorLink}"
+      }],
+      "publisher": {
+          "@type": "Organization",
+          "name": "The Limelight Online",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "${SITE_URL}/favicon/favicon-192x192.png"
+          }
+      },
+      "articleBody": "${escapeJs((article.content || '').replace(/<[^>]*>?/gm, ' ').substring(0, 500))}"
+    }
+    </script>
+    <script type="application/ld+json">
+    ${getBreadcrumbSchema([
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": SITE_URL },
+      { "@type": "ListItem", "position": 2, "name": categoryName, "item": `${SITE_URL}/category/${article.categories?.slug || 'general'}.html` },
+      { "@type": "ListItem", "position": 3, "name": escapeJs(article.title), "item": articleUrl }
+    ])}
+    </script>
+  `;
+
   const bakedContent = `
     <header class="article-header">
       <span class="category-label">${categoryName}</span>
@@ -1088,8 +1585,10 @@ function generateArticleHtml(article, template) {
       <div class="article-meta">
         <div class="author-info">
           <img src="${authorAvatar}" alt="${escapeQuotes(authorName)}">
-          <span>By <strong>${authorName}</strong></span>
+          <span>By <a href="${authorLink}" style="color:inherit;font-weight:600;">${authorName}</a></span>
         </div>
+        <span>&bull;</span>
+        <span class="reading-time"><i class="fas fa-clock" style="margin-right:4px;"></i>${readingTime} min read</span>
         <span>&bull;</span>
         <span>${formattedDate}</span>
       </div>
@@ -1099,12 +1598,17 @@ function generateArticleHtml(article, template) {
     </div>
     <div class="article-body" id="articleBody">
       ${article.content || ''}
-    </div>`;
+    </div>
+    ${relatedHtml}
+    ${authorBioHtml}`;
 
   output = output.replace(
     /<div style="padding: 100px 0; text-align: center;">[\s\S]*?<\/div>/,
     bakedContent
   );
+
+  // Inject Schema right before closing head
+  output = output.replace('</head>', schemaHtml + '\n</head>');
 
   // Remove Supabase CDN script tag
   output = output.replace(
@@ -1114,7 +1618,7 @@ function generateArticleHtml(article, template) {
 
   // Remove the entire Supabase runtime script block
   output = output.replace(
-    /<script>[\s\S]*?const SUPABASE_URL[\s\S]*?<\/script>/,
+    /<script>[^<]*?const SUPABASE_URL[\s\S]*?<\/script>/,
     ''
   );
 
@@ -1123,6 +1627,7 @@ function generateArticleHtml(article, template) {
     document.addEventListener('DOMContentLoaded', () => {
       setupTOC();
       setupShare();
+      setupThemeToggle();
     });
 
     function setupTOC() {
@@ -1149,7 +1654,7 @@ function generateArticleHtml(article, template) {
 
     function setupShare() {
       const url   = encodeURIComponent(window.location.href);
-      const title = encodeURIComponent(\`${escapeJs(article.title)}\`);
+      const title = encodeURIComponent(\`\${escapeJs(article.title)}\`);
       const fb = 'https://www.facebook.com/sharer/sharer.php?u=' + url;
       const tw = 'https://twitter.com/intent/tweet?text=' + title + '&url=' + url;
       const wa = 'https://api.whatsapp.com/send?text=' + title + '%20' + url;
@@ -1166,6 +1671,67 @@ function generateArticleHtml(article, template) {
           setTimeout(() => { cp.innerHTML = '<i class="fas fa-copy"></i>'; }, 2000);
         });
       });
+    }
+
+    function setupThemeToggle() {
+      const btn = document.getElementById('themeToggle');
+      if (btn) {
+        let isAnimating = false;
+        btn.addEventListener('click', (e) => {
+          if (isAnimating) return;
+          isAnimating = true;
+          
+          const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+          const nextTheme = isDark ? 'light' : 'dark';
+          
+          const rect = btn.getBoundingClientRect();
+          const x = e.clientX || (rect.left + rect.width / 2);
+          const y = e.clientY || (rect.top + rect.height / 2);
+          
+          const overlay = document.createElement('div');
+          overlay.className = 'theme-clip-overlay animating';
+          overlay.style.backgroundColor = nextTheme === 'dark' ? '#121212' : '#ffffff';
+          overlay.style.setProperty('--x', x + 'px');
+          overlay.style.setProperty('--y', y + 'px');
+          
+          // Ensure styles for overlay exist (in case not loaded via CSS file)
+          if (!document.getElementById('clipOverlayStyles')) {
+            const style = document.createElement('style');
+            style.id = 'clipOverlayStyles';
+            style.textContent = \`
+              .theme-clip-overlay {
+                position: fixed;
+                top: 0; left: 0; width: 100vw; height: 100vh;
+                z-index: 9999;
+                pointer-events: none;
+                clip-path: circle(0px at var(--x) var(--y));
+              }
+              .theme-clip-overlay.animating {
+                animation: clip-expand 0.6s ease-in forwards;
+              }
+              @keyframes clip-expand {
+                0% { clip-path: circle(0px at var(--x) var(--y)); }
+                100% { clip-path: circle(150vmax at var(--x) var(--y)); }
+              }
+            \`;
+            document.head.appendChild(style);
+          }
+          
+          document.body.appendChild(overlay);
+          
+          setTimeout(() => {
+            if (nextTheme === 'dark') {
+              document.documentElement.setAttribute('data-theme', 'dark');
+              localStorage.setItem('limelight-theme', 'dark');
+            } else {
+              document.documentElement.removeAttribute('data-theme');
+              localStorage.setItem('limelight-theme', 'light');
+            }
+            overlay.remove();
+            isAnimating = false;
+          }, 580);
+        });
+      }
     }
   <\/script>`;
 
@@ -1286,6 +1852,7 @@ async function main() {
   // Phase 2 — Homepage
   generateIndexHtml(data);
   await generateCategoryPages(data);
+  await generateAuthorPages(data);
 
   // Phase 3 — Article pages
   const articleTemplate = fs.readFileSync('article.html', 'utf-8');
@@ -1294,7 +1861,17 @@ async function main() {
   let articleCount = 0;
   for (const article of data.allPosts) {
     try {
-      const { html, safeSlug } = generateArticleHtml(article, articleTemplate);
+      // Fetch full content individually to avoid Supabase JSON payload size limits
+      const { data: fullArticle, error } = await supabase
+        .from('posts')
+        .select('content')
+        .eq('id', article.id)
+        .single();
+      
+      if (error) throw new Error('Failed to fetch content: ' + error.message);
+      article.content = fullArticle.content;
+
+      const { html, safeSlug } = generateArticleHtml(article, articleTemplate, data.allPosts);
       const dir = path.join('dist', 'article', safeSlug);
       fs.mkdirSync(dir, { recursive: true });
       fs.writeFileSync(path.join(dir, 'index.html'), html);
@@ -1316,6 +1893,18 @@ async function main() {
     if (fs.existsSync(f)) { fs.copyFileSync(f, path.join('dist', f)); }
   });
   console.log('✓ Copied static pages');
+  
+  // Copy Favicon files
+  const faviconSrcDir = path.join(__dirname, 'favicon');
+  const faviconDistDir = path.join('dist', 'favicon');
+  if (fs.existsSync(faviconSrcDir)) {
+      fs.mkdirSync(faviconDistDir, { recursive: true });
+      const faviconFiles = fs.readdirSync(faviconSrcDir);
+      faviconFiles.forEach(f => {
+          fs.copyFileSync(path.join(faviconSrcDir, f), path.join(faviconDistDir, f));
+      });
+      console.log('✓ Copied favicon files');
+  }
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(`
