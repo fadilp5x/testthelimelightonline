@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY;
 const SITE_URL = process.env.SITE_URL || 'https://thelimelightonline.in';
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
