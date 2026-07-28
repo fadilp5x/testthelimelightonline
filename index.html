@@ -11,7 +11,12 @@
     <meta property="og:description" content="The Limelight is a leading online magazine, offering insightful articles, captivating stories, and in-depth analysis.">
     <meta property="og:image" content="https://i.ibb.co/NdsYM9dx/web-logo-123.png">
     
-    <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co/WN46nq9w/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="96x96" href="/favicon/favicon-96x96.png">
+    <link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg">
+    <link rel="shortcut icon" href="/favicon/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-title" content="The Limelight">
+    <link rel="manifest" href="/favicon/site.webmanifest">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     
@@ -147,7 +152,91 @@
             .carousel-title { font-size: 1.8rem; }
             .search-container { display: none; } /* Hide desktop search on mobile, usually handled by a separate mobile input if needed */
         }
+        
+        /* Dark Mode CSS */
+        :root {
+          --dm-bg: #121212; --dm-surface: #1e1e1e; --dm-surface2: #2a2a2a;
+          --dm-text: #e4e4e4; --dm-text-muted: #aaaaaa; --dm-border: #333333;
+          --dm-accent: #d4845a;
+        }
+        [data-theme="dark"] {
+          --accent-color: #d4845a; --text-color: #e4e4e4; --border-color: #333;
+          --card-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+        [data-theme="dark"] body { background-color: #121212; color: #e4e4e4; }
+        [data-theme="dark"] .header, [data-theme="dark"] .site-header { background: #1e1e1e !important; border-bottom-color: #333 !important; }
+        [data-theme="dark"] .nav-link, [data-theme="dark"] .nav-menu a { color: #ccc !important; }
+        [data-theme="dark"] .nav-link:hover { color: #d4845a !important; }
+        [data-theme="dark"] .dropdown, [data-theme="dark"] .has-dropdown .dropdown { background: #1e1e1e; border-color: #333; }
+        [data-theme="dark"] .dropdown-item { color: #ccc; border-bottom-color: #333; }
+        [data-theme="dark"] .dropdown-item:hover { background: #2a2a2a; color: #d4845a; }
+        [data-theme="dark"] .article-card { background: #1e1e1e; border-color: #333; }
+        [data-theme="dark"] .card-title a { color: #e4e4e4; }
+        [data-theme="dark"] .card-excerpt { color: #aaa; }
+        [data-theme="dark"] .card-author { color: #888; border-top-color: #333; }
+        [data-theme="dark"] .site-footer { background: #0a0a0a; }
+        [data-theme="dark"] .footer-bottom { border-top-color: #222; }
+        [data-theme="dark"] .carousel-overlay { background: linear-gradient(to top, rgba(0,0,0,0.95), transparent); }
+        [data-theme="dark"] .category-header { background: linear-gradient(135deg, #6b3510 0%, #7a3f22 100%); }
+        [data-theme="dark"] .author-card { background: #1e1e1e; border-color: #333; }
+        [data-theme="dark"] .author-bio-card { background: #1e1e1e; border-color: #333; }
+        [data-theme="dark"] .author-page-header { background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%); }
+        .theme-toggle {
+          background: none; border: 1.5px solid #ccc; border-radius: 20px;
+          padding: 5px 10px; cursor: pointer; font-size: 0.85rem; color: #666;
+          display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;
+        }
+        .theme-toggle:hover { border-color: #8B4513; color: #8B4513; }
+        .theme-toggle .icon-dark { display: none; }
+        .theme-toggle .icon-light { display: inline; }
+        [data-theme="dark"] .theme-toggle { border-color: #555; color: #ccc; }
+        [data-theme="dark"] .theme-toggle:hover { border-color: #d4845a; color: #d4845a; }
+        [data-theme="dark"] .theme-toggle .icon-dark { display: inline; }
+        [data-theme="dark"] .theme-toggle .icon-light { display: none; }        /* Homepage card fade-in animation */
+        @keyframes fadeSlideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: no-preference) {
+          .article-card {
+            opacity: 0;
+            animation: fadeSlideUp 0.5s ease forwards;
+          }
+          .article-card:nth-child(1) { animation-delay: 0.05s; }
+          .article-card:nth-child(2) { animation-delay: 0.10s; }
+          .article-card:nth-child(3) { animation-delay: 0.15s; }
+          .article-card:nth-child(4) { animation-delay: 0.20s; }
+          .article-card:nth-child(5) { animation-delay: 0.25s; }
+          .article-card:nth-child(6) { animation-delay: 0.30s; }
+          .article-card:nth-child(7) { animation-delay: 0.35s; }
+          .article-card:nth-child(8) { animation-delay: 0.40s; }
+          .article-card:nth-child(9) { animation-delay: 0.45s; }
+        }
+        .theme-clip-overlay {
+          position: fixed;
+          top: 0; left: 0; width: 100vw; height: 100vh;
+          z-index: 9999;
+          pointer-events: none;
+          clip-path: circle(0px at var(--x) var(--y));
+        }
+        .theme-clip-overlay.animating {
+          animation: clip-expand 0.6s ease-in forwards;
+        }
+        @keyframes clip-expand {
+          0% { clip-path: circle(0px at var(--x) var(--y)); }
+          100% { clip-path: circle(150vmax at var(--x) var(--y)); }
+        }
     </style>
+    <script>
+    (function() {
+      var saved = localStorage.getItem('limelight-theme');
+      if (saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else if (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+    </script>
 </head>
 <body>
     <header class="header">
@@ -161,6 +250,12 @@
 
             <ul class="nav-menu" id="navMenu">
                 <!-- Nav items injected by JS -->
+                <li class="nav-item">
+                    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                      <i class="fas fa-moon icon-dark"></i>
+                      <i class="fas fa-sun icon-light"></i>
+                    </button>
+                </li>
                 <li class="nav-item">
                     <div class="search-container" id="searchContainer">
                         <input type="text" class="search-input" id="searchInput" placeholder="Search articles...">
@@ -452,6 +547,45 @@
         }
 
         init();
+        
+        document.addEventListener('DOMContentLoaded', function() {
+          var btn = document.getElementById('themeToggle');
+          if (btn) {
+            let isAnimating = false;
+            btn.addEventListener('click', function(e) {
+              if (isAnimating) return;
+              isAnimating = true;
+              
+              var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+              var nextTheme = isDark ? 'light' : 'dark';
+              
+              var rect = btn.getBoundingClientRect();
+              var x = e.clientX || (rect.left + rect.width / 2);
+              var y = e.clientY || (rect.top + rect.height / 2);
+              
+              var overlay = document.createElement('div');
+              overlay.className = 'theme-clip-overlay animating';
+              overlay.style.backgroundColor = nextTheme === 'dark' ? '#121212' : '#ffffff';
+              overlay.style.setProperty('--x', x + 'px');
+              overlay.style.setProperty('--y', y + 'px');
+              document.body.appendChild(overlay);
+              
+              setTimeout(function() {
+                if (nextTheme === 'dark') {
+                  document.documentElement.setAttribute('data-theme', 'dark');
+                  localStorage.setItem('limelight-theme', 'dark');
+                } else {
+                  document.documentElement.removeAttribute('data-theme');
+                  localStorage.setItem('limelight-theme', 'light');
+                }
+                overlay.remove();
+                isAnimating = false;
+              }, 580);
+            });
+          }
+        });
     </script>
 </body>
 </html>
+
+
