@@ -299,9 +299,11 @@ async function fetchAllData() {
     })
   );
 
+  const baseSelect = 'id, title, slug, excerpt, image_url, created_at, updated_at, category_id, author_id, is_featured, authors(full_name, avatar_url, bio), categories(name, slug)';
+
   const { data: featuredPosts, error: e2 } = await supabase
     .from('posts')
-    .select('*, authors(full_name, avatar_url), categories(name, slug)')
+    .select(baseSelect)
     .eq('is_featured', true)
     .order('created_at', { ascending: false })
     .limit(5);
@@ -309,14 +311,14 @@ async function fetchAllData() {
 
   const { data: latestPosts, error: e3 } = await supabase
     .from('posts')
-    .select('*, authors(full_name, avatar_url), categories(name, slug)')
+    .select(baseSelect)
     .order('created_at', { ascending: false })
     .range(0, 8);
   if (e3) throw new Error('Latest posts fetch failed: ' + e3.message);
 
   const { data: allPosts, error: e4 } = await supabase
     .from('posts')
-    .select('*, authors(full_name, avatar_url), categories(name, slug)')
+    .select(baseSelect)
     .order('created_at', { ascending: false });
   if (e4) throw new Error('All posts fetch failed: ' + e4.message);
 
@@ -1859,6 +1861,16 @@ async function main() {
   let articleCount = 0;
   for (const article of data.allPosts) {
     try {
+      // Fetch full content individually to avoid Supabase JSON payload size limits
+      const { data: fullArticle, error } = await supabase
+        .from('posts')
+        .select('content')
+        .eq('id', article.id)
+        .single();
+      
+      if (error) throw new Error('Failed to fetch content: ' + error.message);
+      article.content = fullArticle.content;
+
       const { html, safeSlug } = generateArticleHtml(article, articleTemplate, data.allPosts);
       const dir = path.join('dist', 'article', safeSlug);
       fs.mkdirSync(dir, { recursive: true });
