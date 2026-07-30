@@ -668,7 +668,40 @@
       position: fixed; top: 0; left: 0; height: 3px; background: var(--accent-color, #8B4513);
       z-index: 999999; width: 0%; transition: width 0.3s ease;
     }
+        /* Top Loading Bar */
+        #article-loading-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background-color: var(--accent-color);
+            z-index: 9999;
+            width: 0%;
+            transition: width 0.2s ease, opacity 0.5s ease;
+        }
     </style>
+    
+    <div id="article-loading-bar"></div>
+    <script>
+        (function() {
+            const bar = document.getElementById('article-loading-bar');
+            if (bar) {
+                let width = 0;
+                const interval = setInterval(() => {
+                    width += Math.random() * 10;
+                    if (width > 90) width = 90; // stall at 90% until load
+                    bar.style.width = width + '%';
+                }, 200);
+                window.addEventListener('load', () => {
+                    clearInterval(interval);
+                    bar.style.width = '100%';
+                    setTimeout(() => {
+                        bar.style.opacity = '0';
+                    }, 500);
+                });
+            }
+        })();
+    </script>
     <div id="top-progress-bar"></div>
     <script>
       (function() {
@@ -806,6 +839,21 @@
         const slug = pathParts[pathParts.length - 1];
 
         document.addEventListener('DOMContentLoaded', async () => {
+            // Theme toggle logic for dynamic page
+            const btn = document.getElementById('themeToggle');
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                    if (isDark) {
+                        document.documentElement.removeAttribute('data-theme');
+                        localStorage.setItem('limelight-theme', 'light');
+                    } else {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                        localStorage.setItem('limelight-theme', 'dark');
+                    }
+                });
+            }
+
             if(slug) {
                 await loadArticle();
             }

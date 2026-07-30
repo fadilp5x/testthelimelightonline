@@ -21,6 +21,12 @@ const escapeJs = (str) => str
   ? str.replace(/\\/g, '\\\\').replace(/`/g, '\`').replace(/\$/g, '\\$')
   : '';
 // Must match the safeSlug used when writing files to dist/article/
+function estimateReadingTime(text) {
+  if (!text) return 1;
+  const words = text.replace(/<[^>]*>?/gm, '').split(/\s+/).length;
+  return Math.ceil(words / 200) || 1;
+}
+
 const normalizeSlug = (slug) => slug.replace(/[^a-z0-9\-]/gi, '-').toLowerCase();
 
 function calcReadingTime(htmlContent) {
@@ -371,26 +377,74 @@ function generateFooterCategoriesHtml(categoriesWithChildren) {
 }
 
 function generateCarouselHtml(featuredPosts) {
-  const slides = featuredPosts.map((p, i) => `
-    <div class="carousel-slide ${i === 0 ? 'active' : ''}">
-      <img src="${p.image_url}" class="carousel-image" alt="${escapeQuotes(p.title)}" width="1200" height="520" style="aspect-ratio: 1200/520; object-fit: cover;">
-      <div class="carousel-overlay">
-        <div class="carousel-meta">
-          <span>${p.categories?.name || 'General'}</span>
-          <span>&bull;</span>
-          <span>${new Date(p.created_at).toLocaleDateString()}</span>
+  if (!featuredPosts || featuredPosts.length === 0) return '';
+  
+  const slidesHtml = featuredPosts.map((p, i) => {
+    const categoryName = p.categories?.name || '';
+    const authorName = p.authors?.full_name || '';
+    const authorAvatar = p.authors?.avatar_url || '';
+    const readingTime = estimateReadingTime(p.content || p.excerpt || '');
+    const date = new Date(p.created_at).toLocaleDateString('en-GB', {
+      day: 'numeric', month: 'long', year: 'numeric'
+    });
+    const slug = normalizeSlug(p.slug);
+    
+    return `
+    <div class="hero-slide ${i === 0 ? 'active' : ''}" 
+         data-index="${i}" 
+         style="background-image: url('${p.image_url}');">
+      <div class="hero-cinematic-overlay"></div>
+      <div class="hero-content">
+        <div class="hero-eyebrow">
+          <span class="hero-category">${categoryName}</span>
+          <span class="hero-dot">•</span>
+          <span class="hero-readtime">${readingTime} MIN READ</span>
         </div>
-        <h2 class="carousel-title"><a href="/article/${normalizeSlug(p.slug)}" style="color:white">${p.title}</a></h2>
-        <div class="carousel-excerpt">${p.excerpt || ''}</div>
+        <h2 class="hero-title">${p.title}</h2>
+        <p class="hero-excerpt">${(p.excerpt || '').substring(0, 160)}</p>
+        <div class="hero-author-card">
+          ${authorAvatar
+            ? `<img src="${authorAvatar}" alt="${authorName}" class="hero-author-avatar">`
+            : `<div class="hero-author-initials">${authorName.charAt(0)}</div>`
+          }
+          <div class="hero-author-info">
+            <span class="hero-author-name">${authorName}</span>
+            <span class="hero-author-date">${date}</span>
+          </div>
+        </div>
+        <a href="/article/${slug}" class="hero-cta">
+          Read Article <span class="hero-cta-arrow">→</span>
+        </a>
       </div>
-    </div>`).join('\n');
-
-  const indicators = featuredPosts.map((_, i) =>
-    `<div class="indicator ${i === 0 ? 'active' : ''}" onclick="goToSlide(${i})"></div>`
-  ).join('\n');
-
-  return { slides, indicators };
+    </div>`;
+  }).join('');
+  
+  const indexPanelHtml = featuredPosts.map((p, i) => `
+    <div class="hero-index-item ${i === 0 ? 'active' : ''}" data-slide="${i}">
+      <span class="hero-index-num">0${i + 1}</span>
+      <img src="${p.image_url}" alt="" class="hero-index-thumb">
+      <span class="hero-index-title">${p.title}</span>
+    </div>
+  `).join('');
+  
+  return `
+  <div class="cinematic-hero" id="cinematicHero">
+    <div class="hero-slides-wrapper">${slidesHtml}</div>
+    <div class="hero-index-panel">${indexPanelHtml}</div>
+    <div class="hero-nav">
+      <button class="hero-prev" aria-label="Previous article">←</button>
+      <button class="hero-next" aria-label="Next article">→</button>
+    </div>
+    <div class="hero-progress-bar">
+      <div class="hero-progress-fill" id="heroProgressFill"></div>
+    </div>
+    <div class="hero-counter">
+      <span id="heroCurrentSlide">01</span> / 
+      <span>${String(featuredPosts.length).padStart(2, '0')}</span>
+    </div>
+  </div>`;
 }
+
 
 function generateArticleCardsHtml(latestPosts) {
   return latestPosts.map(p => {
@@ -439,32 +493,7 @@ function buildNavHtml(categoriesWithChildren) {
   return html;
 }
 
-function buildCarouselHtml(featuredPosts) {
-  if (!featuredPosts || featuredPosts.length === 0) return { slidesHtml: '', indicatorsHtml: '' };
-  const slidesHtml = featuredPosts.map((p, i) => {
-    const authorName = p.authors?.full_name || 'The Limelight';
-    const categoryName = p.categories?.name || 'General';
-    const date = new Date(p.created_at).toLocaleDateString('en-IN', {day:'numeric',month:'long',year:'numeric'});
-    return `<div class="carousel-slide ${i === 0 ? 'active' : ''}">
-      <img src="${p.image_url}" class="carousel-image" alt="${p.title}" loading="${i === 0 ? 'eager' : 'lazy'}">
-      <div class="carousel-overlay">
-        <div class="carousel-meta">
-          <span class="carousel-category">${categoryName}</span>
-          <span>&bull;</span>
-          <span>${date}</span>
-        </div>
-        <h2 class="carousel-title">
-          <a href="/article/${p.slug}/" style="color:white;text-decoration:none;">${p.title}</a>
-        </h2>
-        <div class="carousel-excerpt">${p.excerpt || ''}</div>
-      </div>
-    </div>`;
-  }).join('\n');
-  const indicatorsHtml = featuredPosts.map((_, i) =>
-    `<div class="indicator ${i === 0 ? 'active' : ''}" onclick="goToSlide(${i})"></div>`
-  ).join('\n');
-  return { slidesHtml, indicatorsHtml };
-}
+
 
 function buildArticleCardsHtml(posts) {
   if (!posts || posts.length === 0) return '<p style="text-align:center;color:#888;">No articles found.</p>';
@@ -493,43 +522,86 @@ function buildArticleCardsHtml(posts) {
 
 function buildIndexScripts() {
   return `<script>
-let currentSlide = 0;
-let slideInterval;
-
-function changeSlide(dir) {
-  const slides = document.querySelectorAll('.carousel-slide');
-  const dots = document.querySelectorAll('.indicator');
+(function initCinematicHero() {
+  const DURATION = 8000;
+  const slides = document.querySelectorAll('.hero-slide');
+  const indexItems = document.querySelectorAll('.hero-index-item');
+  const progressFill = document.getElementById('heroProgressFill');
+  const counterEl = document.getElementById('heroCurrentSlide');
+  
   if (!slides.length) return;
-  slides[currentSlide].classList.remove('active');
-  dots[currentSlide] && dots[currentSlide].classList.remove('active');
-  currentSlide = (currentSlide + dir + slides.length) % slides.length;
-  slides[currentSlide].classList.add('active');
-  dots[currentSlide] && dots[currentSlide].classList.add('active');
-  resetTimer();
-}
-
-function goToSlide(index) {
-  const slides = document.querySelectorAll('.carousel-slide');
-  const dots = document.querySelectorAll('.indicator');
-  if (!slides.length) return;
-  slides[currentSlide].classList.remove('active');
-  dots[currentSlide] && dots[currentSlide].classList.remove('active');
-  currentSlide = index;
-  slides[currentSlide].classList.add('active');
-  dots[currentSlide] && dots[currentSlide].classList.add('active');
-  resetTimer();
-}
-
-function startSlideTimer() { slideInterval = setInterval(() => changeSlide(1), 5000); }
-function resetTimer() { clearInterval(slideInterval); startSlideTimer(); }
+  
+  let current = 0;
+  let timer = null;
+  let progressTimer = null;
+  let paused = false;
+  
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    if (indexItems[current]) indexItems[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    if (indexItems[current]) indexItems[current].classList.add('active');
+    if (counterEl) counterEl.textContent = String(current + 1).padStart(2, '0');
+    startProgress();
+  }
+  
+  function startProgress() {
+    if (progressFill) {
+      progressFill.style.transition = 'none';
+      progressFill.style.width = '0%';
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          progressFill.style.transition = \`width \${DURATION}ms linear\`;
+          progressFill.style.width = '100%';
+        });
+      });
+    }
+    clearTimeout(timer);
+    if (!paused) timer = setTimeout(() => goTo(current + 1), DURATION);
+  }
+  
+  function pause() { paused = true; clearTimeout(timer); }
+  function resume() { paused = false; startProgress(); }
+  
+  // Buttons
+  const prevBtn = document.querySelector('.hero-prev');
+  const nextBtn = document.querySelector('.hero-next');
+  if (prevBtn) prevBtn.addEventListener('click', () => goTo(current - 1));
+  if (nextBtn) nextBtn.addEventListener('click', () => goTo(current + 1));
+  
+  // Index panel
+  indexItems.forEach((item, i) => {
+    item.addEventListener('click', () => goTo(i));
+  });
+  
+  // Hover pause
+  const hero = document.getElementById('cinematicHero');
+  if (hero) {
+    hero.addEventListener('mouseenter', pause);
+    hero.addEventListener('mouseleave', resume);
+  }
+  
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') goTo(current - 1);
+    if (e.key === 'ArrowRight') goTo(current + 1);
+  });
+  
+  // Swipe (mobile)
+  let touchStartX = 0;
+  if (hero) {
+    hero.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    hero.addEventListener('touchend', e => {
+      const diff = touchStartX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 50) goTo(current + (diff > 0 ? 1 : -1));
+    }, { passive: true });
+  }
+  
+  startProgress();
+})();
 
 document.addEventListener('DOMContentLoaded', () => {
-  startSlideTimer();
-
-  const prevBtn = document.querySelector('.carousel-prev');
-  const nextBtn = document.querySelector('.carousel-next');
-  if (prevBtn) prevBtn.addEventListener('click', () => changeSlide(-1));
-  if (nextBtn) nextBtn.addEventListener('click', () => changeSlide(1));
 
   const toggle = document.querySelector('.mobile-nav-toggle');
   const mainNav = document.querySelector('.main-nav');
@@ -710,7 +782,7 @@ function generateIndexHtml(data) {
     console.log('Style blocks found:', styleContents.length);
   }
   const navItemsHtml = buildNavHtml(categoriesWithChildren);
-  const { slidesHtml, indicatorsHtml } = buildCarouselHtml(featuredPosts);
+  const heroHtml = generateCarouselHtml(featuredPosts);
   const cardsHtml = buildArticleCardsHtml(latestPosts);
   const footerCatsHtml = categoriesWithChildren.map(p =>
     `<li><a href="/category/${p.slug}.html">${p.name}</a></li>`
@@ -1045,14 +1117,7 @@ ${getDarkModeInitScript()}
     </ul>
   </div>
 </header>
-<section class="featured-section" id="featuredCarousel">
-  <div class="carousel-container" id="carouselContainer">
-    ${slidesHtml}
-  </div>
-  <button class="carousel-btn carousel-prev"><i class="fas fa-chevron-left"></i></button>
-  <button class="carousel-btn carousel-next"><i class="fas fa-chevron-right"></i></button>
-  <div class="carousel-indicators" id="carouselIndicators">${indicatorsHtml}</div>
-</section>
+${heroHtml}
 <main class="main-content">
   <h2 style="text-align:center;font-family:'Playfair Display',serif;color:#8B4513;margin:40px 0 30px;font-size:2rem;">Latest Articles</h2>
   <div class="articles-grid" id="articlesGrid">${cardsHtml}</div>
@@ -1137,10 +1202,16 @@ ${getDarkModeToggleScript()}
 async function generateCategoryPages(data) {
   const { categoriesWithChildren, allPosts } = data;
   
-  // Read styles ONCE outside the loop for performance
+  // Flatten categories array for easy lookup
+  const categories = [];
+  categoriesWithChildren.forEach(c => {
+    categories.push(c);
+    if (c.children) categories.push(...c.children);
+  });
+
   const originalIndex = fs.readFileSync('index.html', 'utf-8');
   const styleContents = [];
-  const styleRegex = /<style[^>]*>([\\s\\S]*?)<\/style>/gi;
+  const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
   let styleMatch;
   while ((styleMatch = styleRegex.exec(originalIndex)) !== null) {
     styleContents.push(styleMatch[1]);
@@ -1149,30 +1220,64 @@ async function generateCategoryPages(data) {
     ? `<style>\n${styleContents.join('\n')}\n</style>`
     : '';
 
-  const allCategories = [];
-  categoriesWithChildren.forEach(parent => {
-    allCategories.push(parent);
-    if (parent.children) parent.children.forEach(child => allCategories.push(child));
-  });
+  const navItemsHtml = buildNavHtml(categoriesWithChildren);
+  const footerCatsHtml = categoriesWithChildren
+    .filter(c => !c.parent_id)
+    .map(c => `<li><a href="/category/${c.slug}.html">${c.name}</a></li>`)
+    .join('\n');
 
-  fs.mkdirSync('dist/category', { recursive: true });
+  categories.forEach(category => {
+    // 1) Find subcategories
+    const subCategories = categories.filter(c => c.parent_id === category.id);
+    const subCatsHtml = subCategories.length > 0
+      ? `<div class="subcats-nav">
+           ${subCategories.map(sub => `<a href="/category/${sub.slug}.html" class="subcat-link">${sub.name}</a>`).join('')}
+         </div>`
+      : '';
 
-  for (const category of allCategories) {
-    const categoryPosts = allPosts.filter(p => {
-      return p.category_id === category.id;
-    });
+    // 2) Filter posts to this category OR its subcategories
+    const categoryIds = [category.id, ...subCategories.map(c => c.id)];
+    const catPosts = allPosts.filter(p => categoryIds.includes(p.category_id));
 
-    const navHtml = buildNavHtml(categoriesWithChildren);
-    const cardsHtml = buildArticleCardsHtml(categoryPosts);
-    const pageTitle = `${category.name} - Articles`;
-    const pageDescription = `Read all articles in ${category.name} on The Limelight Online`;
+    // 3) Split posts into hero (1), featured (next 3), grid (rest)
+    const heroPost = catPosts.length > 0 ? catPosts[0] : null;
+    const featuredPosts = catPosts.slice(1, 4);
+    const gridPosts = catPosts.slice(4);
 
+    const pageTitle = `${category.name} | The Limelight`;
+    const pageDescription = category.description || `Explore articles in ${category.name}`;
+
+    // 4) Build specific HTML sections
+    const catHeroHtml = heroPost ? `
+      <a href="/article/${normalizeSlug(heroPost.slug)}/" class="cat-hero-card">
+        <img src="${heroPost.image_url}" alt="" class="cat-hero-img">
+        <div class="cat-hero-overlay"></div>
+        <div class="cat-hero-content">
+          <h2 style="font-family:'Playfair Display',serif; font-size:42px; margin:0 0 15px;">${heroPost.title}</h2>
+          <p style="font-family:'Lato',sans-serif; font-size:16px; opacity:0.9;">${(heroPost.excerpt || '').substring(0, 150)}</p>
+        </div>
+      </a>
+    ` : '';
+
+    const catFeaturedHtml = featuredPosts.length ? `
+      <div class="cat-featured-grid">
+        ${buildArticleCardsHtml(featuredPosts)}
+      </div>
+    ` : '';
+
+    const catGridHtml = gridPosts.length ? `
+      <div class="articles-grid">
+        ${buildArticleCardsHtml(gridPosts)}
+      </div>
+    ` : '';
+
+    // 5) Build full HTML
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${pageTitle} | The Limelight</title>
+<title>${pageTitle}</title>
 <meta name="description" content="${pageDescription}">
 <meta property="og:title" content="${pageTitle}">
 <meta property="og:description" content="${pageDescription}">
@@ -1181,124 +1286,26 @@ async function generateCategoryPages(data) {
 <link rel="canonical" href="${SITE_URL}/category/${category.slug}.html">
 <meta name="robots" content="index, follow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://i.ibb.co">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;1,400&family=Montserrat:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+${getFaviconHtml()}
 ${allStyles}
 ${getDarkModeCSS()}
 <style>
-/* ── CATEGORY PAGE STYLES ── */
-.category-header {
-  background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
-  color: white;
-  padding: 40px 20px;
-  text-align: center;
-  margin-bottom: 40px;
-}
-
-.category-header h1 {
-  font-family: 'Playfair Display', serif;
-  font-size: 2.5rem;
-  margin: 0;
-  margin-bottom: 10px;
-}
-
-.category-header p {
-  font-size: 1.1rem;
-  margin: 0;
-  opacity: 0.95;
-}
-
-.articles-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 30px;
-  max-width: 1300px;
-  margin: 0 auto;
-  padding: 0 20px 60px;
-}
-
-.article-card {
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.article-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-}
-
-.article-image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-}
-
-.article-content {
-  padding: 20px;
-}
-
-.article-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.3rem;
-  margin: 0 0 10px 0;
-  line-height: 1.3;
-}
-
-.article-title a {
-  color: #333;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.article-title a:hover {
-  color: #8B4513;
-}
-
-.article-excerpt {
-  font-size: 0.95rem;
-  color: #666;
-  margin: 10px 0;
-  line-height: 1.5;
-}
-
-.article-meta {
-  font-size: 0.85rem;
-  color: #999;
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-}
-
-.no-articles {
-  text-align: center;
-  padding: 60px 20px;
-  color: #666;
-}
-
-.no-articles h2 {
-  font-size: 1.5rem;
-  margin-bottom: 10px;
-}
-
-.no-articles p {
-  font-size: 1.1rem;
-}
-
-/* Ensure footer stays at bottom */
-body {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-main {
-  flex: 1;
-}
+/* ── HEADER LAYOUT FIX ── */
+.header { position: sticky; top: 0; z-index: 1000; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+.header-content { display: flex; align-items: center; justify-content: space-between; height: 80px; }
+.site-title img { height: 50px; width: auto; display: block; }
+.nav-menu { display: flex; align-items: center; gap: 20px; margin: 0; padding: 0; list-style: none; }
+.nav-item { position: relative; }
+.nav-link { font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 600; color: #333; text-decoration: none; text-transform: uppercase; padding: 10px 0; transition: color 0.3s; }
+.nav-link:hover { color: #8B4513; }
+.mobile-nav-toggle { display: none; background: none; border: none; font-size: 24px; color: #333; cursor: pointer; }
+[data-theme="dark"] .header { background: #1a1a1a; }
+[data-theme="dark"] .nav-link, [data-theme="dark"] .mobile-nav-toggle { color: #f5f5f5; }
+[data-theme="dark"] .nav-link:hover { color: #C89A47; }
 </style>
 ${getDarkModeInitScript()}
 </head>
@@ -1310,34 +1317,37 @@ ${getDarkModeInitScript()}
       <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight">
     </a>
     <div class="mobile-controls" style="display: flex; gap: 15px; align-items: center;">
-      <button class="mobile-nav-toggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+      <button class="mobile-nav-toggle" aria-label="Toggle navigation">
+        <i class="fas fa-bars"></i>
+      </button>
     </div>
     <ul class="nav-menu" id="navMenu">
-      ${navHtml}
+      ${navItemsHtml}
       <li class="nav-item">${getDarkModeToggleBtn()}</li>
     </ul>
   </div>
 </header>
 
-<main>
-  <div class="category-header">
-    <h1>${category.name}</h1>
-    <p>${categoryPosts.length} article${categoryPosts.length !== 1 ? 's' : ''}</p>
+<main class="main-content" style="padding-top: 0; max-width: 100%;">
+  
+  <header class="cat-page-header">
+    <h1 class="cat-page-title">${category.name}</h1>
+    <p class="cat-page-desc">${category.description || ''}</p>
+    ${subCatsHtml}
+  </header>
+
+  <div class="cat-layout-wrapper">
+    ${catHeroHtml}
+    ${catFeaturedHtml}
+    ${catGridHtml}
+    
+    ${catPosts.length === 0 ? '<p style="text-align:center; padding: 100px 0; font-family:\'Lato\',sans-serif; color:#666;">No articles in this category yet.</p>' : ''}
   </div>
 
-  ${categoryPosts.length > 0
-    ? `<div class="articles-grid">${cardsHtml}</div>`
-    : `<div class="no-articles">
-        <h2>No Articles Yet</h2>
-        <p>There are no published articles in this category yet. Check back soon!</p>
-      </div>`
-  }
 </main>
 
 <footer class="site-footer">
   <div class="footer-inner">
-
-    <!-- Column 1: Brand + About tagline -->
     <div class="footer-col footer-brand">
       <h3 class="footer-logo">THE LIMELIGHT</h3>
       <p class="footer-tagline">
@@ -1345,12 +1355,8 @@ ${getDarkModeInitScript()}
         literature, Islamic thought, arts and culture — writing for
         a world that still believes ideas matter.
       </p>
-      <a href="/contact.html" class="footer-about-link">
-        About The Limelight &rarr;
-      </a>
+      <a href="/contact.html" class="footer-about-link">About The Limelight &rarr;</a>
     </div>
-
-    <!-- Column 2: Explore -->
     <div class="footer-col">
       <h4 class="footer-col-title">Explore</h4>
       <ul class="footer-links">
@@ -1360,54 +1366,49 @@ ${getDarkModeInitScript()}
         <li><a href="/sitemap.xml">Sitemap</a></li>
       </ul>
     </div>
-
-    <!-- Column 3: Categories -->
     <div class="footer-col">
       <h4 class="footer-col-title">Categories</h4>
       <ul class="footer-links" id="footerCategories">
-        ${allCategories
-          .filter(c => !c.parent_id) // Only show parent categories in footer
-          .map(c => `<li><a href="/category/${c.slug}.html">${c.name}</a></li>`)
-          .join('')}
+        ${footerCatsHtml}
       </ul>
     </div>
-
-    <!-- Column 4: Follow us -->
     <div class="footer-col">
       <h4 class="footer-col-title">Follow Us</h4>
       <div class="footer-social">
-        <a href="https://www.instagram.com/the_limelight_bimonthly/" target="_blank" rel="noopener" aria-label="Instagram">
-          <i class="fab fa-instagram"></i>
-        </a>
-        <a href="https://www.facebook.com/profile.php?id=100091897094886#" target="_blank" rel="noopener" aria-label="Facebook">
-          <i class="fab fa-facebook-f"></i>
-        </a>
-        <a href="https://www.youtube.com/@Thelimelightonline" target="_blank" rel="noopener" aria-label="YouTube">
-          <i class="fab fa-youtube"></i>
-        </a>
+        <a href="https://www.instagram.com/the_limelight_bimonthly/" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://www.facebook.com/profile.php?id=100091897094886#" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+        <a href="https://www.youtube.com/@Thelimelightonline" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
       </div>
     </div>
-
-  </div><!-- /.footer-inner -->
-
+  </div>
   <div class="footer-bottom">
-    <p>&copy; 2025 The Limelight Online. All rights reserved.</p>
-    <p class="footer-bottom-links">
-      <a href="/contact.html">Contact</a>
-      &nbsp;&middot;&nbsp;
-      <a href="/sitemap.xml">Sitemap</a>
-    </p>
+    <p>&copy; ${new Date().getFullYear()} The Limelight Online. All Rights Reserved.</p>
   </div>
 </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const toggle = document.querySelector('.mobile-nav-toggle');
+  const navMenu = document.querySelector('.nav-menu');
+  if (toggle && navMenu) {
+    toggle.addEventListener('click', () => {
+      navMenu.classList.toggle('active');
+    });
+  }
+});
+</script>
 ${getDarkModeToggleScript()}
 </body>
 </html>`;
 
-    const filePath = path.join('dist', 'category', `${category.slug}.html`);
+    const categoryDir = path.join('dist', 'category');
+    if (!fs.existsSync(categoryDir)) fs.mkdirSync(categoryDir, { recursive: true });
+    const filePath = path.join(categoryDir, `${category.slug}.html`);
     fs.writeFileSync(filePath, html);
-    console.log(`✓ Category: /category/${category.slug}.html (${categoryPosts.length} posts)`);
-  }
+    console.log(`✓ Category: /category/${category.slug}.html (${catPosts.length} posts)`);
+  });
 }
+
 async function generateAuthorPages(data) {
   const { categoriesWithChildren, allPosts, allAuthors } = data;
   if (!allAuthors || allAuthors.length === 0) {
@@ -1468,6 +1469,19 @@ async function generateAuthorPages(data) {
 ${allStyles}
 ${getDarkModeCSS()}
 <style>
+/* ── HEADER LAYOUT FIX ── */
+.header { position: sticky; top: 0; z-index: 1000; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+.header-content { display: flex; align-items: center; justify-content: space-between; height: 80px; }
+.site-title img { height: 50px; width: auto; display: block; }
+.nav-menu { display: flex; align-items: center; gap: 20px; margin: 0; padding: 0; list-style: none; }
+.nav-item { position: relative; }
+.nav-link { font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 600; color: #333; text-decoration: none; text-transform: uppercase; padding: 10px 0; transition: color 0.3s; }
+.nav-link:hover { color: #8B4513; }
+.mobile-nav-toggle { display: none; background: none; border: none; font-size: 24px; color: #333; cursor: pointer; }
+[data-theme="dark"] .header { background: #1a1a1a; }
+[data-theme="dark"] .nav-link, [data-theme="dark"] .mobile-nav-toggle { color: #f5f5f5; }
+[data-theme="dark"] .nav-link:hover { color: #C89A47; }
+
 .author-page-header {
   background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
   color: white; padding: 50px 20px; text-align: center;
@@ -1597,6 +1611,17 @@ ${getDarkModeInitScript()}
     </p>
   </div>
 </footer>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const toggle = document.querySelector('.mobile-nav-toggle');
+  const navMenu = document.querySelector('.nav-menu');
+  if (toggle && navMenu) {
+    toggle.addEventListener('click', () => {
+      navMenu.classList.toggle('active');
+    });
+  }
+});
+</script>
 ${getDarkModeToggleScript()}
 </body>
 </html>`;
