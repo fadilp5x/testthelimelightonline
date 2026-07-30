@@ -7,7 +7,7 @@
     "dev": "node build.js && npx serve dist -p 3000"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.0.0",
+    "@supabase/supabase-js": "^2.111.0",
     "dotenv": "^16.0.0"
   },
   "devDependencies": {
