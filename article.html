@@ -13,7 +13,9 @@
     <meta name="apple-mobile-web-app-title" content="The Limelight">
     <link rel="manifest" href="/favicon/site.webmanifest">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;1,400&family=Montserrat:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-bg: #fff;
@@ -27,12 +29,15 @@
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            font-family: 'Roboto', sans-serif; 
+            font-family: 'Lato', sans-serif; font-size: 17px; color: #444;
             background-color: var(--primary-bg); 
-            color: var(--text-color); 
             line-height: 1.8; 
             overflow-x: hidden; /* Prevent horizontal scroll */
         }
+        .nav-link, .navbar a, nav a, .category-badge, .category-label, .article-category, .eyebrow-text, .author-label, .share-label {
+            font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;
+        }
+        .article-body em, .article-body i, figcaption, cite { font-family: 'Lato', sans-serif; font-style: italic; }
         
         a { color: inherit; text-decoration: none; transition: color 0.2s; }
         a:hover { color: var(--accent-color); }
@@ -106,10 +111,11 @@
         }
 
         /* 3. Body Text (Readability Optimized) */
-        .article-body { 
-            font-family: 'Georgia', serif; 
-            font-size: 1.2rem; /* Larger text as requested */
-            color: #2a2a2a;
+        .article-body, .article-content, .ql-editor-output { 
+            font-family: 'Lato', sans-serif; 
+            font-size: 17px; 
+            line-height: 1.8;
+            color: #444;
             overflow-wrap: break-word; /* Prevents long words/URLs from breaking layout */
         }
         .article-body p { margin-bottom: 1.8em; }
@@ -179,7 +185,7 @@
             height: auto;
         }
         .article-body figcaption {
-            font-family: 'Roboto', sans-serif;
+            font-family: 'Lato', sans-serif;
             font-size: 0.85rem;
             font-style: italic;
             color: #777;
@@ -241,6 +247,14 @@
             margin-bottom: 15px;
             display: block;
         }
+
+        /* ── QUILL FONT SIZES ── */
+        /* These match Quill's output when using px-value size attributor */
+        .article-body span[style*="font-size: 13px"] { font-size: 13px; }
+        .article-body span[style*="font-size: 15px"] { font-size: 15px; }
+        .article-body span[style*="font-size: 17px"] { font-size: 17px; }
+        .article-body span[style*="font-size: 20px"] { font-size: 20px; }
+        .article-body span[style*="font-size: 25px"] { font-size: 25px; }
 
         /* ── Related Articles Block ── */
         .related-section {
@@ -405,8 +419,9 @@
             color: #ddd;
         }
         [data-theme="dark"] .article-body h2 {
-            color: var(--dm-accent);
+            border-bottom-color: #333; color: var(--dm-accent);
         }
+        [data-theme="dark"] .article-title { color: #e4e4e4; }
         [data-theme="dark"] .article-body blockquote {
             background: #2a2a2a;
             color: #bbb;
@@ -452,9 +467,132 @@
         .share-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; transition: transform 0.2s; font-size: 16px; }
         .share-icon:hover { transform: scale(1.1); }
 
-        /* --- Footer --- */
-        .site-footer { background: var(--footer-bg); color: #ccc; padding: 60px 0 20px; margin-top: 80px; }
-        .footer-content { max-width: 1200px; margin: 0 auto; padding: 0 20px; text-align: center; }
+        /* ── ARTICLE PAGE FOOTER ── */
+        .site-footer {
+          background: #111;
+          color: #ccc;
+          padding: 60px 20px 0;
+          margin-top: 80px;
+        }
+
+        .footer-inner {
+          max-width: 1200px;
+          margin: 0 auto;
+          display: grid;
+          grid-template-columns: 2fr 1fr 1fr 1fr;
+          gap: 40px;
+          padding-bottom: 50px;
+          border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 900px) {
+          .footer-inner { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 560px) {
+          .footer-inner { grid-template-columns: 1fr; }
+        }
+
+        .footer-logo {
+          font-family: 'Playfair Display', serif;
+          font-size: 1.6rem;
+          color: white;
+          margin: 0 0 15px 0;
+          letter-spacing: 0.05em;
+        }
+
+        .footer-tagline {
+          font-family: 'Lato', sans-serif;
+          font-size: 14px;
+          line-height: 1.7;
+          color: #aaa;
+          margin-bottom: 20px;
+        }
+
+        .footer-about-link {
+          display: inline-block;
+          font-family: 'Montserrat', sans-serif;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #c0a060; /* warm gold — matches the accent/serif brand feel */
+          text-decoration: none;
+          border-bottom: 1px solid #c0a060;
+          padding-bottom: 2px;
+          transition: color 0.2s;
+        }
+        .footer-about-link:hover { color: white; border-color: white; }
+
+        .footer-col-title {
+          font-family: 'Montserrat', sans-serif;
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          color: #888;
+          margin: 0 0 20px 0;
+        }
+
+        .footer-links {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+
+        .footer-links li { margin-bottom: 10px; }
+
+        .footer-links a {
+          font-family: 'Lato', sans-serif;
+          font-size: 14px;
+          color: #bbb;
+          text-decoration: none;
+          transition: color 0.2s;
+        }
+        .footer-links a:hover { color: white; }
+
+        .footer-social {
+          display: flex;
+          gap: 14px;
+          flex-wrap: wrap;
+          margin-top: 5px;
+        }
+
+        .footer-social a {
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.08);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #ccc;
+          font-size: 16px;
+          text-decoration: none;
+          transition: background 0.2s, color 0.2s;
+        }
+        .footer-social a:hover { background: #c0a060; color: white; }
+
+        .footer-bottom {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 20px 0 30px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 10px;
+          font-family: 'Lato', sans-serif;
+          font-size: 13px;
+          color: #666;
+        }
+
+        .footer-bottom-links a {
+          color: #666;
+          text-decoration: none;
+          transition: color 0.2s;
+        }
+        .footer-bottom-links a:hover { color: #aaa; }
 
         /* --- Mobile Optimization --- */
         @media (max-width: 992px) {
@@ -496,6 +634,20 @@
         @media (min-width: 480px) and (max-width: 768px) {
             .related-grid { grid-template-columns: repeat(2, 1fr); }
         }
+        .theme-clip-overlay {
+          position: fixed;
+          top: 0; left: 0; width: 100vw; height: 100vh;
+          z-index: 9999;
+          pointer-events: none;
+          clip-path: circle(0px at var(--x) var(--y));
+        }
+        .theme-clip-overlay.animating {
+          animation: clip-expand 0.6s ease-in forwards;
+        }
+        @keyframes clip-expand {
+          0% { clip-path: circle(0px at var(--x) var(--y)); }
+          100% { clip-path: circle(150vmax at var(--x) var(--y)); }
+        }
     </style>
     <!-- Dark mode: apply saved theme before first paint to avoid flash -->
     <script>
@@ -510,6 +662,30 @@
     </script>
 </head>
 <body>
+    <!-- Top Progress Bar -->
+    <style>
+    #top-progress-bar {
+      position: fixed; top: 0; left: 0; height: 3px; background: var(--accent-color, #8B4513);
+      z-index: 999999; width: 0%; transition: width 0.3s ease;
+    }
+    </style>
+    <div id="top-progress-bar"></div>
+    <script>
+      (function() {
+        var bar = document.getElementById('top-progress-bar');
+        var w = 0;
+        var interval = setInterval(function() {
+          w += Math.random() * 15;
+          if (w > 85) w = 85;
+          bar.style.width = w + '%';
+        }, 100);
+        window.addEventListener('load', function() {
+          clearInterval(interval);
+          bar.style.width = '100%';
+          setTimeout(function() { bar.style.opacity = '0'; }, 500);
+        });
+      })();
+    </script>
 
     <header class="header">
         <div class="header-content">
@@ -558,10 +734,66 @@
     </div>
 
     <footer class="site-footer">
-        <div class="footer-content">
-            <h3 style="color:white; font-family:'Playfair Display'; margin-bottom:10px;">THE LIMELIGHT</h3>
-            <p>&copy; 2025 The Limelight Online. All rights reserved.</p>
+      <div class="footer-inner">
+
+        <!-- Column 1: Brand + About tagline -->
+        <div class="footer-col footer-brand">
+          <h3 class="footer-logo">THE LIMELIGHT</h3>
+          <p class="footer-tagline">
+            A bimonthly academic web magazine devoted to South Asian
+            literature, Islamic thought, arts and culture — writing for
+            a world that still believes ideas matter.
+          </p>
+          <a href="/contact.html" class="footer-about-link">
+            About The Limelight &rarr;
+          </a>
         </div>
+
+        <!-- Column 2: Explore -->
+        <div class="footer-col">
+          <h4 class="footer-col-title">Explore</h4>
+          <ul class="footer-links">
+            <li><a href="/index.html">Home</a></li>
+            <li><a href="/authors.html">Authors</a></li>
+            <li><a href="/contact.html">Contact Us</a></li>
+            <li><a href="/sitemap.xml">Sitemap</a></li>
+          </ul>
+        </div>
+
+        <!-- Column 3: Categories -->
+        <div class="footer-col">
+          <h4 class="footer-col-title">Categories</h4>
+          <ul class="footer-links" id="footerCategories">
+            __FOOTER_CATEGORIES__
+          </ul>
+        </div>
+
+        <!-- Column 4: Follow us -->
+        <div class="footer-col">
+          <h4 class="footer-col-title">Follow Us</h4>
+          <div class="footer-social">
+            <a href="https://www.instagram.com/the_limelight_bimonthly/" target="_blank" rel="noopener" aria-label="Instagram">
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://www.facebook.com/profile.php?id=100091897094886#" target="_blank" rel="noopener" aria-label="Facebook">
+              <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="https://www.youtube.com/@Thelimelightonline" target="_blank" rel="noopener" aria-label="YouTube">
+              <i class="fab fa-youtube"></i>
+            </a>
+          </div>
+        </div>
+
+      </div><!-- /.footer-inner -->
+
+      <div class="footer-bottom">
+        <p>&copy; 2025 The Limelight Online. All rights reserved.</p>
+        <p class="footer-bottom-links">
+          <a href="/contact.html">Contact</a>
+          &nbsp;&middot;&nbsp;
+          <a href="/sitemap.xml">Sitemap</a>
+        </p>
+      </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -670,20 +902,7 @@
             document.getElementById('mShareTw').href = tw;
             document.getElementById('mShareWa').href = wa;
         }
-        // Dark mode toggle
-        const themeToggle = document.getElementById('themeToggle');
-        if (themeToggle) {
-            themeToggle.addEventListener('click', () => {
-                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-                if (isDark) {
-                    document.documentElement.removeAttribute('data-theme');
-                    localStorage.setItem('limelight-theme', 'light');
-                } else {
-                    document.documentElement.setAttribute('data-theme', 'dark');
-                    localStorage.setItem('limelight-theme', 'dark');
-                }
-            });
-        }
+
     </script>
 </body>
 </html>

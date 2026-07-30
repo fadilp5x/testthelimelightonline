@@ -18,7 +18,9 @@
     <meta name="apple-mobile-web-app-title" content="The Limelight">
     <link rel="manifest" href="/favicon/site.webmanifest">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;1,400&family=Montserrat:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     
     <style>
         :root { 
@@ -31,7 +33,11 @@
             --transition-speed: 0.3s; 
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Roboto', sans-serif; background-color: #fff; color: var(--text-color); line-height: 1.6; }
+        body { font-family: 'Lato', sans-serif; font-size: 17px; background-color: #fff; color: #444; line-height: 1.8; }
+        .nav-link, .navbar a, nav a, .category-badge, .category-label, .article-category, .eyebrow-text, .author-label, .share-label {
+            font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;
+        }
+        .article-body em, .article-body i, figcaption, cite { font-family: 'Lato', sans-serif; font-style: italic; }
         
         .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
         a { text-decoration: none; color: inherit; transition: color 0.3s; }
@@ -239,6 +245,28 @@
     </script>
 </head>
 <body>
+    <!-- Splash Screen Loader -->
+    <style>
+    #page-loader {
+      position: fixed; inset: 0; background: #fff; z-index: 99999;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.5s, visibility 0.5s;
+    }
+    #page-loader.hidden { opacity: 0; visibility: hidden; }
+    [data-theme="dark"] #page-loader { background: #121212; }
+    .loader-spinner {
+      width: 50px; height: 50px; border: 3px solid rgba(139,69,19,0.3);
+      border-top-color: #8B4513; border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+    <div id="page-loader"><div class="loader-spinner"></div></div>
+    <script>
+    window.addEventListener('load', function() {
+      document.getElementById('page-loader').classList.add('hidden');
+    });
+    </script>
     <header class="header">
         <div class="container header-content">
             <a href="/index.html" class="site-title"><img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight"></a>
@@ -288,21 +316,66 @@
     </main>
 
     <footer class="site-footer">
-        <div class="container footer-grid">
-            <div>
-                <h3 class="footer-logo">THE LIMELIGHT</h3>
-                <p>Insightful articles, captivating stories, and in-depth analysis on a variety of topics that matter.</p>
+        <div class="footer-inner">
+
+            <!-- Column 1: Brand + About tagline -->
+            <div class="footer-col footer-brand">
+            <h3 class="footer-logo">THE LIMELIGHT</h3>
+            <p class="footer-tagline">
+                A bimonthly academic web magazine devoted to South Asian
+                literature, Islamic thought, arts and culture — writing for
+                a world that still believes ideas matter.
+            </p>
+            <a href="/contact.html" class="footer-about-link">
+                About The Limelight &rarr;
+            </a>
             </div>
-            <div>
-                <h4 style="color:white; margin-bottom:20px; font-size: 1.1rem;">Categories</h4>
-                <div class="footer-links"><ul id="footerCategories"></ul></div>
+
+            <!-- Column 2: Explore -->
+            <div class="footer-col">
+            <h4 class="footer-col-title">Explore</h4>
+            <ul class="footer-links">
+                <li><a href="/index.html">Home</a></li>
+                <li><a href="/authors.html">Authors</a></li>
+                <li><a href="/contact.html">Contact Us</a></li>
+                <li><a href="/sitemap.xml">Sitemap</a></li>
+            </ul>
             </div>
-            <div>
-                <h4 style="color:white; margin-bottom:20px; font-size: 1.1rem;">Support</h4>
-                <div class="footer-links"><ul id="footerSupport"></ul></div>
+
+            <!-- Column 3: Categories -->
+            <div class="footer-col">
+            <h4 class="footer-col-title">Categories</h4>
+            <ul class="footer-links" id="footerCategories">
+                <!-- Categories injected dynamically -->
+            </ul>
             </div>
+
+            <!-- Column 4: Follow us -->
+            <div class="footer-col">
+            <h4 class="footer-col-title">Follow Us</h4>
+            <div class="footer-social">
+                <a href="https://www.instagram.com/the_limelight_bimonthly/" target="_blank" rel="noopener" aria-label="Instagram">
+                <i class="fab fa-instagram"></i>
+                </a>
+                <a href="https://www.facebook.com/profile.php?id=100091897094886#" target="_blank" rel="noopener" aria-label="Facebook">
+                <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="https://www.youtube.com/@Thelimelightonline" target="_blank" rel="noopener" aria-label="YouTube">
+                <i class="fab fa-youtube"></i>
+                </a>
+            </div>
+            </div>
+
+        </div><!-- /.footer-inner -->
+
+        <div class="footer-bottom">
+            <p>&copy; 2025 The Limelight Online. All rights reserved.</p>
+            <p class="footer-bottom-links">
+            <a href="/contact.html">Contact</a>
+            &nbsp;&middot;&nbsp;
+            <a href="/sitemap.xml">Sitemap</a>
+            </p>
         </div>
-        <div class="footer-bottom"><p>&copy; 2025 The Limelight Online. All rights reserved.</p></div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

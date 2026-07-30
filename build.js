@@ -729,7 +729,7 @@ ${getSEOHeadTags({
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://i.ibb.co">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;1,400&family=Montserrat:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 ${getFaviconHtml()}
 ${allStyles}
@@ -780,7 +780,7 @@ ${getDarkModeCSS()}
 .nav-link {
   display: block;
   padding: 8px 12px;
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Lato', sans-serif;
   font-size: 0.85rem;
   font-weight: 500;
   color: #333;
@@ -818,7 +818,7 @@ ${getDarkModeCSS()}
   color: #333;
   text-decoration: none;
   font-size: 0.85rem;
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Lato', sans-serif;
   border-bottom: 1px solid #f0f0f0;
   transition: background 0.2s, color 0.2s;
 }
@@ -1022,27 +1022,27 @@ ${getDarkModeInitScript()}
 <script type="application/ld+json">${getWebSiteSchema()}</script>
 </head>
 <body>
-<header class="site-header">
-  <div class="header-inner">
-    <a href="/index.html" class="logo-link">
-      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight" class="logo-img">
+<header class="header">
+  <div class="container header-content">
+    <a href="/index.html" class="site-title">
+      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight">
     </a>
-    <button class="mobile-nav-toggle" aria-label="Toggle navigation">
-      <i class="fas fa-bars"></i>
-    </button>
-    <nav class="main-nav">
-      <ul class="nav-list" id="navMenu">
-        ${navItemsHtml}
-        <li class="nav-item">${getDarkModeToggleBtn()}</li>
-        <li class="nav-item">
-          <div class="search-container" id="searchContainer">
-            <i class="fas fa-search search-icon" id="searchIcon"></i>
-            <input type="text" class="search-input" id="searchInput" placeholder="Search articles...">
-            <div class="search-results" id="searchResults"></div>
-          </div>
-        </li>
-      </ul>
-    </nav>
+    <div class="mobile-controls" style="display: flex; gap: 15px; align-items: center;">
+      <button class="mobile-nav-toggle" aria-label="Toggle navigation">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <ul class="nav-menu" id="navMenu">
+      ${navItemsHtml}
+      <li class="nav-item">${getDarkModeToggleBtn()}</li>
+      <li class="nav-item">
+        <div class="search-container" id="searchContainer">
+          <input type="text" class="search-input" id="searchInput" placeholder="Search articles...">
+          <i class="fas fa-search search-icon" id="searchIcon"></i>
+          <div class="search-results" id="searchResults"></div>
+        </div>
+      </li>
+    </ul>
   </div>
 </header>
 <section class="featured-section" id="featuredCarousel">
@@ -1060,27 +1060,65 @@ ${getDarkModeInitScript()}
   </div>
 </main>
 <footer class="site-footer">
-  <div class="footer-grid">
-    <div class="footer-col">
-      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight" style="height:50px;margin-bottom:15px;">
-      <p style="color:#ccc;font-size:0.9rem;">Literature, essays, arts and culture.</p>
+  <div class="footer-inner">
+
+    <!-- Column 1: Brand + About tagline -->
+    <div class="footer-col footer-brand">
+      <h3 class="footer-logo">THE LIMELIGHT</h3>
+      <p class="footer-tagline">
+        A bimonthly academic web magazine devoted to South Asian
+        literature, Islamic thought, arts and culture — writing for
+        a world that still believes ideas matter.
+      </p>
+      <a href="/contact.html" class="footer-about-link">
+        About The Limelight &rarr;
+      </a>
     </div>
+
+    <!-- Column 2: Explore -->
     <div class="footer-col">
-      <h4 class="footer-heading">Categories</h4>
-      <ul class="footer-links" id="footerCategories">${footerCatsHtml}</ul>
-    </div>
-    <div class="footer-col">
-      <h4 class="footer-heading">Quick Links</h4>
+      <h4 class="footer-col-title">Explore</h4>
       <ul class="footer-links">
         <li><a href="/index.html">Home</a></li>
         <li><a href="/authors.html">Authors</a></li>
-        <li><a href="/contact.html">Contact</a></li>
+        <li><a href="/contact.html">Contact Us</a></li>
         <li><a href="/sitemap.xml">Sitemap</a></li>
       </ul>
     </div>
-  </div>
+
+    <!-- Column 3: Categories -->
+    <div class="footer-col">
+      <h4 class="footer-col-title">Categories</h4>
+      <ul class="footer-links" id="footerCategories">
+        ${footerCatsHtml}
+      </ul>
+    </div>
+
+    <!-- Column 4: Follow us -->
+    <div class="footer-col">
+      <h4 class="footer-col-title">Follow Us</h4>
+      <div class="footer-social">
+        <a href="https://www.instagram.com/the_limelight_bimonthly/" target="_blank" rel="noopener" aria-label="Instagram">
+          <i class="fab fa-instagram"></i>
+        </a>
+        <a href="https://www.facebook.com/profile.php?id=100091897094886#" target="_blank" rel="noopener" aria-label="Facebook">
+          <i class="fab fa-facebook-f"></i>
+        </a>
+        <a href="https://www.youtube.com/@Thelimelightonline" target="_blank" rel="noopener" aria-label="YouTube">
+          <i class="fab fa-youtube"></i>
+        </a>
+      </div>
+    </div>
+
+  </div><!-- /.footer-inner -->
+
   <div class="footer-bottom">
-    <p>&copy; ${new Date().getFullYear()} The Limelight Online. All rights reserved.</p>
+    <p>&copy; 2025 The Limelight Online. All rights reserved.</p>
+    <p class="footer-bottom-links">
+      <a href="/contact.html">Contact</a>
+      &nbsp;&middot;&nbsp;
+      <a href="/sitemap.xml">Sitemap</a>
+    </p>
   </div>
 </footer>
 __SCRIPTS_PLACEHOLDER__
@@ -1144,7 +1182,7 @@ async function generateCategoryPages(data) {
 <meta name="robots" content="index, follow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;1,400&family=Montserrat:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 ${allStyles}
 ${getDarkModeCSS()}
@@ -1266,18 +1304,18 @@ ${getDarkModeInitScript()}
 </head>
 <body>
 
-<header class="site-header">
-  <div class="header-inner">
-    <a href="/index.html" class="logo-link">
-      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight" class="logo-img">
+<header class="header">
+  <div class="container header-content">
+    <a href="/index.html" class="site-title">
+      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight">
     </a>
-    <button class="mobile-nav-toggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
-    <nav class="main-nav">
-      <ul class="nav-list" id="navMenu">
-        ${navHtml}
-        <li class="nav-item">${getDarkModeToggleBtn()}</li>
-      </ul>
-    </nav>
+    <div class="mobile-controls" style="display: flex; gap: 15px; align-items: center;">
+      <button class="mobile-nav-toggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+    </div>
+    <ul class="nav-menu" id="navMenu">
+      ${navHtml}
+      <li class="nav-item">${getDarkModeToggleBtn()}</li>
+    </ul>
   </div>
 </header>
 
@@ -1297,30 +1335,68 @@ ${getDarkModeInitScript()}
 </main>
 
 <footer class="site-footer">
-  <div class="footer-grid">
-    <div class="footer-section">
-      <h3>THE LIMELIGHT</h3>
-      <p>Insightful articles, captivating stories, and in-depth analysis on a variety of topics that matter.</p>
+  <div class="footer-inner">
+
+    <!-- Column 1: Brand + About tagline -->
+    <div class="footer-col footer-brand">
+      <h3 class="footer-logo">THE LIMELIGHT</h3>
+      <p class="footer-tagline">
+        A bimonthly academic web magazine devoted to South Asian
+        literature, Islamic thought, arts and culture — writing for
+        a world that still believes ideas matter.
+      </p>
+      <a href="/contact.html" class="footer-about-link">
+        About The Limelight &rarr;
+      </a>
     </div>
-    <div class="footer-section">
-      <h3>Categories</h3>
-      <ul>
+
+    <!-- Column 2: Explore -->
+    <div class="footer-col">
+      <h4 class="footer-col-title">Explore</h4>
+      <ul class="footer-links">
+        <li><a href="/index.html">Home</a></li>
+        <li><a href="/authors.html">Authors</a></li>
+        <li><a href="/contact.html">Contact Us</a></li>
+        <li><a href="/sitemap.xml">Sitemap</a></li>
+      </ul>
+    </div>
+
+    <!-- Column 3: Categories -->
+    <div class="footer-col">
+      <h4 class="footer-col-title">Categories</h4>
+      <ul class="footer-links" id="footerCategories">
         ${allCategories
           .filter(c => !c.parent_id) // Only show parent categories in footer
           .map(c => `<li><a href="/category/${c.slug}.html">${c.name}</a></li>`)
           .join('')}
       </ul>
     </div>
-    <div class="footer-section">
-      <h3>Support</h3>
-      <ul>
-        <li><a href="/contact.html">Contact</a></li>
-        <li><a href="/sitemap.xml">Sitemap</a></li>
-      </ul>
+
+    <!-- Column 4: Follow us -->
+    <div class="footer-col">
+      <h4 class="footer-col-title">Follow Us</h4>
+      <div class="footer-social">
+        <a href="https://www.instagram.com/the_limelight_bimonthly/" target="_blank" rel="noopener" aria-label="Instagram">
+          <i class="fab fa-instagram"></i>
+        </a>
+        <a href="https://www.facebook.com/profile.php?id=100091897094886#" target="_blank" rel="noopener" aria-label="Facebook">
+          <i class="fab fa-facebook-f"></i>
+        </a>
+        <a href="https://www.youtube.com/@Thelimelightonline" target="_blank" rel="noopener" aria-label="YouTube">
+          <i class="fab fa-youtube"></i>
+        </a>
+      </div>
     </div>
-  </div>
+
+  </div><!-- /.footer-inner -->
+
   <div class="footer-bottom">
     <p>&copy; 2025 The Limelight Online. All rights reserved.</p>
+    <p class="footer-bottom-links">
+      <a href="/contact.html">Contact</a>
+      &nbsp;&middot;&nbsp;
+      <a href="/sitemap.xml">Sitemap</a>
+    </p>
   </div>
 </footer>
 ${getDarkModeToggleScript()}
@@ -1341,7 +1417,7 @@ async function generateAuthorPages(data) {
 
   const originalIndex = fs.readFileSync('index.html', 'utf-8');
   const styleContents = [];
-  const styleRegex = /<style[^>]*>([\\s\\S]*?)<\/style>/gi;
+  const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
   let styleMatch;
   while ((styleMatch = styleRegex.exec(originalIndex)) !== null) {
     styleContents.push(styleMatch[1]);
@@ -1387,7 +1463,7 @@ async function generateAuthorPages(data) {
 <meta name="robots" content="index, follow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;1,400&family=Montserrat:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 ${allStyles}
 ${getDarkModeCSS()}
@@ -1425,18 +1501,18 @@ main { flex: 1; }
 ${getDarkModeInitScript()}
 </head>
 <body>
-<header class="site-header">
-  <div class="header-inner">
-    <a href="/index.html" class="logo-link">
-      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight" class="logo-img">
+<header class="header">
+  <div class="container header-content">
+    <a href="/index.html" class="site-title">
+      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight">
     </a>
-    <button class="mobile-nav-toggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
-    <nav class="main-nav">
-      <ul class="nav-list" id="navMenu">
-        ${navHtml}
-        <li class="nav-item">${getDarkModeToggleBtn()}</li>
-      </ul>
-    </nav>
+    <div class="mobile-controls" style="display: flex; gap: 15px; align-items: center;">
+      <button class="mobile-nav-toggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+    </div>
+    <ul class="nav-menu" id="navMenu">
+      ${navHtml}
+      <li class="nav-item">${getDarkModeToggleBtn()}</li>
+    </ul>
   </div>
 </header>
 
@@ -1457,22 +1533,68 @@ ${getDarkModeInitScript()}
 </main>
 
 <footer class="site-footer">
-  <div class="footer-grid">
-    <div class="footer-col">
-      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight" style="height:50px;margin-bottom:15px;">
-      <p style="color:#ccc;font-size:0.9rem;">Literature, essays, arts and culture.</p>
+  <div class="footer-inner">
+
+    <!-- Column 1: Brand + About tagline -->
+    <div class="footer-col footer-brand">
+      <h3 class="footer-logo">THE LIMELIGHT</h3>
+      <p class="footer-tagline">
+        A bimonthly academic web magazine devoted to South Asian
+        literature, Islamic thought, arts and culture — writing for
+        a world that still believes ideas matter.
+      </p>
+      <a href="/contact.html" class="footer-about-link">
+        About The Limelight &rarr;
+      </a>
     </div>
+
+    <!-- Column 2: Explore -->
     <div class="footer-col">
-      <h4 class="footer-heading">Quick Links</h4>
+      <h4 class="footer-col-title">Explore</h4>
       <ul class="footer-links">
         <li><a href="/index.html">Home</a></li>
         <li><a href="/authors.html">Authors</a></li>
-        <li><a href="/contact.html">Contact</a></li>
+        <li><a href="/contact.html">Contact Us</a></li>
+        <li><a href="/sitemap.xml">Sitemap</a></li>
       </ul>
     </div>
-  </div>
+
+    <!-- Column 3: Categories -->
+    <div class="footer-col">
+      <h4 class="footer-col-title">Categories</h4>
+      <ul class="footer-links" id="footerCategories">
+        ${data.categoriesWithChildren
+          .filter(c => !c.parent_id)
+          .map(c => `<li><a href="/category/${c.slug}.html">${c.name}</a></li>`)
+          .join('')}
+      </ul>
+    </div>
+
+    <!-- Column 4: Follow us -->
+    <div class="footer-col">
+      <h4 class="footer-col-title">Follow Us</h4>
+      <div class="footer-social">
+        <a href="https://www.instagram.com/the_limelight_bimonthly/" target="_blank" rel="noopener" aria-label="Instagram">
+          <i class="fab fa-instagram"></i>
+        </a>
+        <a href="https://www.facebook.com/profile.php?id=100091897094886#" target="_blank" rel="noopener" aria-label="Facebook">
+          <i class="fab fa-facebook-f"></i>
+        </a>
+        <a href="https://www.youtube.com/@Thelimelightonline" target="_blank" rel="noopener" aria-label="YouTube">
+          <i class="fab fa-youtube"></i>
+        </a>
+      </div>
+    </div>
+
+  </div><!-- /.footer-inner -->
+
   <div class="footer-bottom">
-    <p>&copy; ${new Date().getFullYear()} The Limelight Online. All rights reserved.</p>
+    <p>&copy; 2025 The Limelight Online. All rights reserved.</p>
+    <p class="footer-bottom-links">
+      <a href="/contact.html">Contact</a>
+      &nbsp;&middot;&nbsp;
+      <a href="/sitemap.xml">Sitemap</a>
+    </p>
   </div>
 </footer>
 ${getDarkModeToggleScript()}
@@ -1504,7 +1626,7 @@ function validateArticleTemplate(template) {
 
 // ─── Phase 3: generateArticleHtml ─────────────────────────────────────────────
 
-function generateArticleHtml(article, template, allPosts) {
+function generateArticleHtml(article, template, allPosts, categoriesWithChildren) {
   const authorName   = article.authors?.full_name   || 'The Limelight';
   const authorAvatar = article.authors?.avatar_url   || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2235%22 height=%2235%22 viewBox=%220 0 35 35%22%3E%3Crect width=%2235%22 height=%2235%22 fill=%22%238B4513%22/%3E%3Ctext x=%2217%22 y=%2223%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2216%22%3E%3F%3C/text%3E%3C/svg%3E';
   const categoryName = article.categories?.name      || 'General';
@@ -1737,6 +1859,12 @@ function generateArticleHtml(article, template, allPosts) {
 
   output = output.replace('</body>', staticScript + '\n</body>');
 
+  const footerCatsHtml = (categoriesWithChildren || [])
+    .filter(c => !c.parent_id) // top-level only
+    .map(c => `<li><a href="/category/${c.slug}.html">${c.name}</a></li>`)
+    .join('');
+  output = output.replace('__FOOTER_CATEGORIES__', footerCatsHtml);
+
   return { html: output, safeSlug };
 }
 
@@ -1871,7 +1999,7 @@ async function main() {
       if (error) throw new Error('Failed to fetch content: ' + error.message);
       article.content = fullArticle.content;
 
-      const { html, safeSlug } = generateArticleHtml(article, articleTemplate, data.allPosts);
+      const { html, safeSlug } = generateArticleHtml(article, articleTemplate, data.allPosts, data.categoriesWithChildren);
       const dir = path.join('dist', 'article', safeSlug);
       fs.mkdirSync(dir, { recursive: true });
       fs.writeFileSync(path.join(dir, 'index.html'), html);
