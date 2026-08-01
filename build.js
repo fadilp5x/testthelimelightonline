@@ -335,12 +335,33 @@ async function fetchAllData() {
     })
   );
 
-  const baseSelect = 'id, title, slug, content, excerpt, image_url, created_at, updated_at, category_id, author_id, is_featured, status, publish_date, authors(full_name, avatar_url, bio), categories(name, slug)';
+  const baseSelect = 'id, title, slug, content, excerpt, image_url, created_at, updated_at, category_id, author_id, is_featured, status, publish_date, template_type, authors(full_name, avatar_url, bio, twitter_url, instagram_url, linkedin_url, website_url, academia_url, orcid_url), categories(name, slug)';
 
-  const { data: rawAllPosts, error: e4 } = await supabase
-    .from('posts')
-    .select(baseSelect)
-    .order('created_at', { ascending: false });
+  let rawAllPosts = [];
+  let e4 = null;
+  const limit = 20;
+  let offset = 0;
+  
+  while (true) {
+    const { data: chunk, error: err } = await supabase
+      .from('posts')
+      .select(baseSelect)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+      
+    if (err) {
+      e4 = err;
+      break;
+    }
+    
+    if (chunk && chunk.length > 0) {
+      rawAllPosts.push(...chunk);
+      if (chunk.length < limit) break;
+      offset += limit;
+    } else {
+      break;
+    }
+  }
   if (e4) throw new Error('All posts fetch failed: ' + e4.message);
 
   const now = new Date();
@@ -1113,6 +1134,42 @@ ${getDarkModeCSS()}
   .carousel-title { font-size: 1.1rem; }
   .logo-img { height: 40px; }
 }
+
+/* ── CINEMATIC HERO LAYOUT ENFORCEMENT ── */
+.cinematic-hero {
+  position: relative;
+  height: 92vh;
+  min-height: 600px;
+  overflow: hidden;
+  background: #0a0a0a;
+}
+.hero-slides-wrapper, .hero-slide, .hero-cinematic-overlay {
+  position: absolute;
+  inset: 0;
+}
+.hero-content {
+  position: absolute;
+  left: 6%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+.hero-index-panel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+}
+@media (max-width: 900px) {
+  .hero-index-panel { display: none; }
+  .cinematic-hero { height: 75vh; }
+}
+@media (max-width: 560px) {
+  .hero-content { left: 4%; max-width: 90%; }
+  .cinematic-hero { height: 85vh; }
+}
+
 </style>
 ${getDarkModeInitScript()}
 <script type="application/ld+json">${getOrganizationSchema()}</script>
@@ -1725,6 +1782,9 @@ function generateArticleHtml(article, template, allPosts, categoriesWithChildren
   const relatedHtml = buildRelatedArticlesHtml(article, allPosts || []);
   const authorBioHtml = buildAuthorBioCardHtml(article);
 
+  // Strip literal <p><br></p> sequences from article.content to avoid double spacing
+  const cleanContent = (article.content || '').replace(/<p><br><\/p>/gi, '');
+
   const schemaHtml = `
     <script type="application/ld+json">
     {
@@ -1776,14 +1836,14 @@ function generateArticleHtml(article, template, allPosts, categoriesWithChildren
         <span>${formattedDate}</span>
       </div>
     </header>
-    <div class="featured-image-container">
-      <img src="${article.image_url || ''}" alt="${escapeQuotes(article.title)}" class="featured-image">
+    <div class="featured-image-container${article.template_type === 'full-image' ? ' featured-image-full' : ''}">
+      <img src="${article.image_url || ''}" alt="${escapeQuotes(article.title)}" class="featured-image${article.template_type === 'full-image' ? ' full-image' : ''}">
     </div>
     <div class="article-body" id="articleBody">
-      ${article.content || ''}
+      ${cleanContent}
     </div>
-    ${relatedHtml}
-    ${authorBioHtml}`;
+    ${authorBioHtml}
+    ${relatedHtml}`;
 
   output = output.replace(
     /<div style="padding: 100px 0; text-align: center;">[\s\S]*?<\/div>/,
