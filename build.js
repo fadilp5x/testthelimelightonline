@@ -335,7 +335,7 @@ async function fetchAllData() {
     })
   );
 
-  const baseSelect = 'id, title, slug, content, excerpt, image_url, created_at, updated_at, category_id, author_id, is_featured, status, publish_date, authors(full_name, avatar_url, bio, twitter_url, instagram_url, linkedin_url, website_url, academia_url, orcid_url), categories(name, slug)';
+  const baseSelect = 'id, title, slug, content, excerpt, image_url, created_at, updated_at, category_id, author_id, is_featured, status, publish_date, template_type, authors(full_name, avatar_url, bio, twitter_url, instagram_url, linkedin_url, website_url, academia_url, orcid_url), categories(name, slug)';
 
   let rawAllPosts = [];
   let e4 = null;
@@ -1836,14 +1836,14 @@ function generateArticleHtml(article, template, allPosts, categoriesWithChildren
         <span>${formattedDate}</span>
       </div>
     </header>
-    <div class="featured-image-container">
-      <img src="${article.image_url || ''}" alt="${escapeQuotes(article.title)}" class="featured-image">
+    <div class="featured-image-container${article.template_type === 'full-image' ? ' featured-image-full' : ''}">
+      <img src="${article.image_url || ''}" alt="${escapeQuotes(article.title)}" class="featured-image${article.template_type === 'full-image' ? ' full-image' : ''}">
     </div>
     <div class="article-body" id="articleBody">
       ${cleanContent}
     </div>
-    ${relatedHtml}
-    ${authorBioHtml}`;
+    ${authorBioHtml}
+    ${relatedHtml}`;
 
   output = output.replace(
     /<div style="padding: 100px 0; text-align: center;">[\s\S]*?<\/div>/,
