@@ -335,7 +335,7 @@ async function fetchAllData() {
     })
   );
 
-  const baseSelect = 'id, title, slug, content, excerpt, image_url, created_at, updated_at, category_id, author_id, is_featured, status, publish_date, template_type, authors(full_name, avatar_url, bio, twitter_url, instagram_url, linkedin_url, website_url, academia_url, orcid_url), categories(name, slug)';
+  const baseSelect = 'id, title, slug, excerpt, image_url, created_at, updated_at, category_id, author_id, is_featured, status, publish_date, template_type, authors(full_name, avatar_url, bio, twitter_url, instagram_url, linkedin_url, website_url, academia_url, orcid_url), categories(name, slug)';
 
   let rawAllPosts = [];
   let e4 = null;
@@ -2110,6 +2110,10 @@ async function main() {
   let articleCount = 0;
   for (const article of data.rawAllPosts) {
     try {
+      // Fetch content individually to prevent heavy payload timeout on Cloudflare Pages
+      const { data: contentData, error: contentErr } = await supabase.from('posts').select('content').eq('id', article.id).single();
+      if (contentErr) throw new Error(`Content fetch failed: ${contentErr.message}`);
+      article.content = contentData ? contentData.content : '';
 
       const { html, safeSlug } = generateArticleHtml(article, articleTemplate, data.allPosts, data.categoriesWithChildren);
       const dir = path.join('dist', 'article', safeSlug);
