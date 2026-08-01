@@ -337,10 +337,31 @@ async function fetchAllData() {
 
   const baseSelect = 'id, title, slug, content, excerpt, image_url, created_at, updated_at, category_id, author_id, is_featured, status, publish_date, authors(full_name, avatar_url, bio, twitter_url, instagram_url, linkedin_url, website_url, academia_url, orcid_url), categories(name, slug)';
 
-  const { data: rawAllPosts, error: e4 } = await supabase
-    .from('posts')
-    .select(baseSelect)
-    .order('created_at', { ascending: false });
+  let rawAllPosts = [];
+  let e4 = null;
+  const limit = 20;
+  let offset = 0;
+  
+  while (true) {
+    const { data: chunk, error: err } = await supabase
+      .from('posts')
+      .select(baseSelect)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+      
+    if (err) {
+      e4 = err;
+      break;
+    }
+    
+    if (chunk && chunk.length > 0) {
+      rawAllPosts.push(...chunk);
+      if (chunk.length < limit) break;
+      offset += limit;
+    } else {
+      break;
+    }
+  }
   if (e4) throw new Error('All posts fetch failed: ' + e4.message);
 
   const now = new Date();
