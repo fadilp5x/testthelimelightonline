@@ -118,7 +118,12 @@
             color: #444;
             overflow-wrap: break-word; /* Prevents long words/URLs from breaking layout */
         }
-        .article-body p { margin-bottom: 1.8em; }
+        .article-body p { margin-bottom: 1.1em; }
+        .article-body p:empty,
+        .article-body p:has(> br:only-child) {
+            margin: 0;
+            height: 0;
+        }
         
         /* Force images inside body to respect width */
         .article-body img { 
@@ -231,7 +236,7 @@
             font-size: 0.9rem;
             padding-left: 2em;
             text-indent: -2em;
-            margin-bottom: 0.8em;
+            margin-bottom: 0.4em;
             line-height: 1.5;
             color: #444;
             display: block;
@@ -357,6 +362,26 @@
             max-width: 480px;
             margin: 0 auto;
         }
+        .author-bio-social {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 14px;
+        }
+        .author-bio-social a {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: rgba(139, 69, 19, 0.08);
+            color: #8B4513;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s;
+        }
+        .author-bio-social a:hover { background: #8B4513; color: white; }
 
         /* ── Reading Time ── */
         .reading-time {
@@ -451,6 +476,8 @@
         [data-theme="dark"] .author-bio-card { background: #1e1e1e; border-color: #333; }
         [data-theme="dark"] .author-bio-name { color: #e4e4e4; }
         [data-theme="dark"] .author-bio-text { color: #aaa; }
+        [data-theme="dark"] .author-bio-social a { background: rgba(200,154,71,0.12); color: #C89A47; }
+        [data-theme="dark"] .author-bio-social a:hover { background: #C89A47; color: #111; }
         [data-theme="dark"] .site-footer { background: #0a0a0a; }
         [data-theme="dark"] a { color: inherit; }
         [data-theme="dark"] a:hover { color: var(--dm-accent); }
@@ -648,6 +675,68 @@
           0% { clip-path: circle(0px at var(--x) var(--y)); }
           100% { clip-path: circle(150vmax at var(--x) var(--y)); }
         }
+
+        /* --- Dark Mode Polish --- */
+        [data-theme="dark"] .toc-sidebar,
+        [data-theme="dark"] .sidebar-left,
+        [data-theme="dark"] .sidebar-right,
+        [data-theme="dark"] .author-bio-card,
+        [data-theme="dark"] .related-article-card {
+            background: transparent;
+        }
+        [data-theme="dark"] .article-body .image-caption,
+        [data-theme="dark"] .article-body figcaption,
+        [data-theme="dark"] .image-credit {
+            color: #999;
+        }
+        [data-theme="dark"] .article-body p {
+            color: #d0d0d0;
+        }
+        [data-theme="dark"] .article-body a {
+            color: var(--dm-accent, #C89A47);
+            text-decoration-color: rgba(200,154,71,0.4);
+        }
+        [data-theme="dark"] .toc-list a { color: #888; }
+        [data-theme="dark"] .toc-list a:hover { color: #ccc; }
+        [data-theme="dark"] .sidebar-widget { background: #1a1a1a; }
+
+        /* --- Full-Size Image CSS --- */
+        .article-figure img {
+            object-fit: cover;
+        }
+        .article-figure-full img {
+            object-fit: contain;
+            width: 100%;
+            max-height: 80vh;
+            background: #f5f5f5;
+        }
+        [data-theme="dark"] .article-figure-full img {
+            background: #1a1a1a;
+        }
+
+        /* --- Print CSS --- */
+        @media print {
+            .site-header, .toc-sidebar, .sidebar-right, .print-btn,
+            .theme-toggle, .related-articles, .site-footer,
+            .author-bio-social, .share-buttons, .sidebar-widget, .header { display: none !important; }
+            
+            .article-body { 
+                color: #000 !important; 
+                background: #fff !important;
+                max-width: 100% !important;
+            }
+            
+            body { background: #fff !important; }
+            
+            [data-theme="dark"] .article-body { color: #000 !important; }
+            [data-theme="dark"] body { background: #fff !important; }
+            
+            a { color: #000 !important; text-decoration: underline; }
+            a[href]:after { content: " (" attr(href) ")"; font-size: 0.8em; color: #555; }
+            
+            img { max-width: 100% !important; page-break-inside: avoid; }
+            h2, h3 { page-break-after: avoid; }
+        }
     </style>
     <!-- Dark mode: apply saved theme before first paint to avoid flash -->
     <script>
@@ -659,6 +748,29 @@
                 document.documentElement.setAttribute('data-theme', 'dark');
             }
         })();
+    </script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('themeToggle');
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+          const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+          if (isDark) {
+            document.documentElement.removeAttribute('data-theme');
+            try { localStorage.setItem('limelight-theme', 'light'); } catch(e) {}
+          } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            try { localStorage.setItem('limelight-theme', 'dark'); } catch(e) {}
+          }
+        });
+
+        const printBtn = document.getElementById('printArticleBtn');
+        if (printBtn) {
+          printBtn.addEventListener('click', () => {
+            window.print();
+          });
+        }
+      });
     </script>
 </head>
 <body>
@@ -740,9 +852,18 @@
             <ul class="toc-list" id="tocList"></ul>
             
             <div class="share-bar">
-                <a href="#" class="share-icon" style="background:#3b5998" id="shareFb"><i class="fab fa-facebook-f"></i></a>
-                <a href="#" class="share-icon" style="background:#1da1f2" id="shareTw"><i class="fab fa-twitter"></i></a>
-                <a href="#" class="share-icon" style="background:#25d366" id="shareWa"><i class="fab fa-whatsapp"></i></a>
+                <a href="javascript:void(0);" class="share-icon" style="background:#3b5998" id="shareFb"><i class="fab fa-facebook-f"></i></a>
+                <a href="javascript:void(0);" class="share-icon" style="background:#1da1f2" id="shareTw"><i class="fab fa-twitter"></i></a>
+                <a href="javascript:void(0);" class="share-icon" style="background:#25d366" id="shareWa"><i class="fab fa-whatsapp"></i></a>
+                <button class="print-btn share-icon" id="printArticleBtn" style="background:#666; border:none; cursor:pointer;" aria-label="Print or save as PDF" title="Print / Save as PDF">
+                    <i class="fas fa-print" style="color:white;"></i>
+                </button>
+            </div>
+            
+            <div class="sidebar-widget contributor-cta" style="margin-top: 2rem; padding: 1.5rem; background: var(--bg-color, #f9f9f9); border: 1px solid var(--border-color, #eee); border-radius: 8px;">
+                <h4 style="margin-top: 0; font-size: 1.1em; color: var(--accent-color, #8B4513);">Contribute to The Limelight</h4>
+                <p style="font-size: 0.9em; line-height: 1.4; margin-bottom: 1rem;">We welcome essays, research, and creative writing on South Asian literature, Islamic thought, arts and culture.</p>
+                <a href="/contact.html" class="cta-button" style="display: inline-block; padding: 8px 12px; background: var(--accent-color, #8B4513); color: white; text-decoration: none; border-radius: 4px; font-size: 0.9em; font-weight: 500;">Submit Your Work &rarr;</a>
             </div>
         </aside>
 
@@ -760,10 +881,10 @@
 
     <!-- Mobile Share Bar -->
     <div class="mobile-share-bar">
-        <a href="#" id="mShareFb"><i class="fab fa-facebook-f"></i></a>
-        <a href="#" id="mShareTw"><i class="fab fa-twitter"></i></a>
-        <a href="#" id="mShareWa"><i class="fab fa-whatsapp"></i></a>
-        <a href="#" id="mShareCp"><i class="fas fa-copy"></i></a>
+        <a href="javascript:void(0);" id="mShareFb"><i class="fab fa-facebook-f"></i></a>
+        <a href="javascript:void(0);" id="mShareTw"><i class="fab fa-twitter"></i></a>
+        <a href="javascript:void(0);" id="mShareWa"><i class="fab fa-whatsapp"></i></a>
+        <a href="javascript:void(0);" id="mShareCp"><i class="fas fa-copy"></i></a>
     </div>
 
     <footer class="site-footer">
@@ -839,20 +960,6 @@
         const slug = pathParts[pathParts.length - 1];
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // Theme toggle logic for dynamic page
-            const btn = document.getElementById('themeToggle');
-            if (btn) {
-                btn.addEventListener('click', () => {
-                    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-                    if (isDark) {
-                        document.documentElement.removeAttribute('data-theme');
-                        localStorage.setItem('limelight-theme', 'light');
-                    } else {
-                        document.documentElement.setAttribute('data-theme', 'dark');
-                        localStorage.setItem('limelight-theme', 'dark');
-                    }
-                });
-            }
 
             if(slug) {
                 await loadArticle();
