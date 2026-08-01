@@ -195,9 +195,9 @@ function getOrganizationSchema() {
     "logo": `${SITE_URL}/favicon/favicon-192x192.png`,
     "description": "The Limelight Online is a bimonthly digital magazine covering South Asian literature, essays, arts and culture.",
     "sameAs": [
-      "https://www.instagram.com/thelimelightonline",
-      "https://twitter.com/thelimelightonline",
-      "https://www.facebook.com/thelimelightonline"
+      "https://www.instagram.com/the_limelight_bimonthly/",
+      "https://www.facebook.com/profile.php?id=100091897094886",
+      "https://www.youtube.com/@Thelimelightonline"
     ],
     "contactPoint": {
       "@type": "ContactPoint",
@@ -231,7 +231,7 @@ function getBreadcrumbSchema(breadcrumbs) {
 function buildRelatedArticlesHtml(currentArticle, allPosts) {
   // Same category first, exclude current
   const sameCategory = allPosts.filter(p =>
-    p.category_id === currentArticle.category_id && p.id !== currentArticle.id
+    p.category_id === currentArticle.category_id && p.id !== currentArticle.id && p.slug
   ).slice(0, 3);
 
   let related = [...sameCategory];
@@ -270,21 +270,51 @@ function buildRelatedArticlesHtml(currentArticle, allPosts) {
   </section>`;
 }
 
+function buildAuthorSocialLinksHtml(author) {
+  if (!author) return '';
+  const socialLinks = [];
+  if (author.twitter_url && author.twitter_url.trim()) {
+    socialLinks.push(`<a href="${author.twitter_url}" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><i class="fab fa-x-twitter"></i></a>`);
+  }
+  if (author.instagram_url && author.instagram_url.trim()) {
+    socialLinks.push(`<a href="${author.instagram_url}" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>`);
+  }
+  if (author.linkedin_url && author.linkedin_url.trim()) {
+    socialLinks.push(`<a href="${author.linkedin_url}" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>`);
+  }
+  if (author.website_url && author.website_url.trim()) {
+    socialLinks.push(`<a href="${author.website_url}" target="_blank" rel="noopener noreferrer" aria-label="Website"><i class="fas fa-globe"></i></a>`);
+  }
+  if (author.academia_url && author.academia_url.trim()) {
+    socialLinks.push(`<a href="${author.academia_url}" target="_blank" rel="noopener noreferrer" aria-label="Academia.edu"><i class="fas fa-graduation-cap"></i></a>`);
+  }
+  if (author.orcid_url && author.orcid_url.trim()) {
+    socialLinks.push(`<a href="${author.orcid_url}" target="_blank" rel="noopener noreferrer" aria-label="ORCID"><i class="fab fa-orcid"></i></a>`);
+  }
+
+  return socialLinks.length > 0
+    ? `<div class="author-bio-social">${socialLinks.join('')}</div>`
+    : '';
+}
+
 function buildAuthorBioCardHtml(article) {
-  const authorName = article.authors?.full_name || 'The Limelight';
-  const authorAvatar = article.authors?.avatar_url ||
+  const author = article.authors || {};
+  const authorName = author.full_name || 'The Limelight';
+  const authorAvatar = author.avatar_url ||
     'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 80 80%22%3E%3Crect width=%2280%22 height=%2280%22 fill=%22%238B4513%22/%3E%3Ctext x=%2240%22 y=%2252%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2236%22%3E%3F%3C/text%3E%3C/svg%3E';
   const authorId = article.author_id || '';
-  const authorLink = authorId ? `/author/${authorId}.html` : '#';
-  const bio = article.authors?.bio || '';
+  const authorLink = authorId ? `<a href="/author/${authorId}.html" class="author-bio-name">${authorName}</a>` : `<span class="author-bio-name">${authorName}</span>`;
+  const bio = author.bio || '';
+  const socialRowHtml = buildAuthorSocialLinksHtml(author);
 
   return `
   <div class="author-bio-card">
     <div class="author-bio-label">Author</div>
     <img src="${authorAvatar}" alt="${escapeQuotes(authorName)}" class="author-bio-avatar"
          onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 80 80%22%3E%3Crect width=%2280%22 height=%2280%22 fill=%22%238B4513%22/%3E%3Ctext x=%2240%22 y=%2252%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2236%22%3E%3F%3C/text%3E%3C/svg%3E'">
-    <a href="${authorLink}" class="author-bio-name">${authorName}</a>
+    ${authorLink}
     ${bio ? `<p class="author-bio-text">${bio}</p>` : ''}
+    ${socialRowHtml}
   </div>`;
 }
 
@@ -305,28 +335,22 @@ async function fetchAllData() {
     })
   );
 
-  const baseSelect = 'id, title, slug, excerpt, image_url, created_at, updated_at, category_id, author_id, is_featured, authors(full_name, avatar_url, bio), categories(name, slug)';
+  const baseSelect = 'id, title, slug, content, excerpt, image_url, created_at, updated_at, category_id, author_id, is_featured, status, publish_date, authors(full_name, avatar_url, bio, twitter_url, instagram_url, linkedin_url, website_url, academia_url, orcid_url), categories(name, slug)';
 
-  const { data: featuredPosts, error: e2 } = await supabase
-    .from('posts')
-    .select(baseSelect)
-    .eq('is_featured', true)
-    .order('created_at', { ascending: false })
-    .limit(5);
-  if (e2) throw new Error('Featured posts fetch failed: ' + e2.message);
-
-  const { data: latestPosts, error: e3 } = await supabase
-    .from('posts')
-    .select(baseSelect)
-    .order('created_at', { ascending: false })
-    .range(0, 8);
-  if (e3) throw new Error('Latest posts fetch failed: ' + e3.message);
-
-  const { data: allPosts, error: e4 } = await supabase
+  const { data: rawAllPosts, error: e4 } = await supabase
     .from('posts')
     .select(baseSelect)
     .order('created_at', { ascending: false });
   if (e4) throw new Error('All posts fetch failed: ' + e4.message);
+
+  const now = new Date();
+  
+  // Filter for public listings
+  const allPosts = rawAllPosts.filter(p => p.status === 'published' && (!p.publish_date || new Date(p.publish_date) <= now));
+
+  // Derive latest and featured locally to respect the date filter without under-fetching
+  const featuredPosts = allPosts.filter(p => p.is_featured).slice(0, 5);
+  const latestPosts = allPosts.slice(0, 8);
 
   const { data: allAuthors, error: e5 } = await supabase
     .from('authors')
@@ -337,10 +361,10 @@ async function fetchAllData() {
   console.log(
     `Fetched: ${categoriesWithChildren.length} categories, ` +
     `${featuredPosts.length} featured, ${latestPosts.length} latest, ` +
-    `${allPosts.length} total articles`
+    `${allPosts.length} public articles, ${rawAllPosts.length} total raw articles`
   );
 
-  return { categoriesWithChildren, featuredPosts, latestPosts, allPosts, allAuthors };
+  return { categoriesWithChildren, featuredPosts, latestPosts, allPosts, rawAllPosts, allAuthors };
 }
 
 // ─── Phase 2: Homepage Helpers ─────────────────────────────────────────────────
@@ -473,6 +497,7 @@ function generateArticleCardsHtml(latestPosts) {
 function buildNavHtml(categoriesWithChildren) {
   let html = `<li class="nav-item"><a href="/index.html" class="nav-link">Home</a></li>`;
   categoriesWithChildren.forEach(parent => {
+    if (!parent.slug) return;
     if (parent.children && parent.children.length > 0) {
       html += `<li class="nav-item has-dropdown">
         <a href="/category/${parent.slug}.html" class="nav-link">
@@ -1088,6 +1113,42 @@ ${getDarkModeCSS()}
   .carousel-title { font-size: 1.1rem; }
   .logo-img { height: 40px; }
 }
+
+/* ── CINEMATIC HERO LAYOUT ENFORCEMENT ── */
+.cinematic-hero {
+  position: relative;
+  height: 92vh;
+  min-height: 600px;
+  overflow: hidden;
+  background: #0a0a0a;
+}
+.hero-slides-wrapper, .hero-slide, .hero-cinematic-overlay {
+  position: absolute;
+  inset: 0;
+}
+.hero-content {
+  position: absolute;
+  left: 6%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+.hero-index-panel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+}
+@media (max-width: 900px) {
+  .hero-index-panel { display: none; }
+  .cinematic-hero { height: 75vh; }
+}
+@media (max-width: 560px) {
+  .hero-content { left: 4%; max-width: 90%; }
+  .cinematic-hero { height: 85vh; }
+}
+
 </style>
 ${getDarkModeInitScript()}
 <script type="application/ld+json">${getOrganizationSchema()}</script>
@@ -1222,7 +1283,7 @@ async function generateCategoryPages(data) {
 
   const navItemsHtml = buildNavHtml(categoriesWithChildren);
   const footerCatsHtml = categoriesWithChildren
-    .filter(c => !c.parent_id)
+    .filter(c => !c.parent_id && c.slug)
     .map(c => `<li><a href="/category/${c.slug}.html">${c.name}</a></li>`)
     .join('\n');
 
@@ -1459,7 +1520,7 @@ async function generateAuthorPages(data) {
 <meta property="og:description" content="${escapeQuotes(pageDesc)}">
 <meta property="og:url" content="${authorUrl}">
 <meta property="og:type" content="profile">
-<meta property="og:image" content="${escapeQuotes(author.avatar_url || '')}">
+<meta property="og:image" content="${escapeQuotes(author.avatar_url || `${SITE_URL}/favicon/favicon-512x512.png`)}">
 <link rel="canonical" href="${authorUrl}">
 <meta name="robots" content="index, follow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1511,6 +1572,9 @@ ${getDarkModeCSS()}
 }
 body { display: flex; flex-direction: column; min-height: 100vh; }
 main { flex: 1; }
+.author-bio-social { display: flex; gap: 12px; justify-content: center; margin-top: 14px; }
+.author-bio-social a { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.15); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; text-decoration: none; transition: background 0.2s, color 0.2s; }
+.author-bio-social a:hover { background: white; color: #8B4513; }
 </style>
 ${getDarkModeInitScript()}
 </head>
@@ -1536,6 +1600,7 @@ ${getDarkModeInitScript()}
          onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 80 80%22%3E%3Crect width=%2280%22 height=%2280%22 fill=%22%238B4513%22/%3E%3Ctext x=%2240%22 y=%2252%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2236%22%3E%3F%3C/text%3E%3C/svg%3E'">
     <h1 class="author-page-name">${author.full_name}</h1>
     ${author.bio ? `<p class="author-page-bio">${author.bio}</p>` : ''}
+    ${buildAuthorSocialLinksHtml(author)}
   </div>
   <div class="author-articles-section">
     <h2 class="author-articles-heading">Articles by ${author.full_name} (${authorPosts.length})</h2>
@@ -1665,7 +1730,7 @@ function generateArticleHtml(article, template, allPosts, categoriesWithChildren
 
   const articleKeywords = `${categoryName}, ${authorName}, South Asian literature, essays, culture, The Limelight Online`;
 
-  const seoHeadTags = getSEOHeadTags({
+  let seoHeadTags = getSEOHeadTags({
     title: `${article.title} | The Limelight`,
     description: article.excerpt || '',
     keywords: articleKeywords,
@@ -1674,6 +1739,13 @@ function generateArticleHtml(article, template, allPosts, categoriesWithChildren
     type: 'article',
     image: article.image_url || ''
   });
+
+  if (article.status !== 'published') {
+    seoHeadTags = seoHeadTags.replace(
+      '<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">',
+      '<meta name="robots" content="noindex, nofollow">'
+    );
+  }
 
   // Inject our dynamic SEO tags
   output = output.replace('__SEO_HEAD_TAGS__', seoHeadTags);
@@ -1688,6 +1760,9 @@ function generateArticleHtml(article, template, allPosts, categoriesWithChildren
   const authorLink = authorId ? `/author/${authorId}.html` : '#';
   const relatedHtml = buildRelatedArticlesHtml(article, allPosts || []);
   const authorBioHtml = buildAuthorBioCardHtml(article);
+
+  // Strip literal <p><br></p> sequences from article.content to avoid double spacing
+  const cleanContent = (article.content || '').replace(/<p><br><\/p>/gi, '');
 
   const schemaHtml = `
     <script type="application/ld+json">
@@ -1744,7 +1819,7 @@ function generateArticleHtml(article, template, allPosts, categoriesWithChildren
       <img src="${article.image_url || ''}" alt="${escapeQuotes(article.title)}" class="featured-image">
     </div>
     <div class="article-body" id="articleBody">
-      ${article.content || ''}
+      ${cleanContent}
     </div>
     ${relatedHtml}
     ${authorBioHtml}`;
@@ -2012,17 +2087,8 @@ async function main() {
   validateArticleTemplate(articleTemplate);
 
   let articleCount = 0;
-  for (const article of data.allPosts) {
+  for (const article of data.rawAllPosts) {
     try {
-      // Fetch full content individually to avoid Supabase JSON payload size limits
-      const { data: fullArticle, error } = await supabase
-        .from('posts')
-        .select('content')
-        .eq('id', article.id)
-        .single();
-      
-      if (error) throw new Error('Failed to fetch content: ' + error.message);
-      article.content = fullArticle.content;
 
       const { html, safeSlug } = generateArticleHtml(article, articleTemplate, data.allPosts, data.categoriesWithChildren);
       const dir = path.join('dist', 'article', safeSlug);
@@ -2033,8 +2099,7 @@ async function main() {
       console.error(`✗ FAILED: ${article.slug} — ${err.message}`);
     }
   }
-  console.log(`✓ Generated ${articleCount} article pages`);
-
+  console.log(` Generated ${articleCount} article pages`);
 
   // Phase 4 — Search, sitemap, Cloudflare config
   generateSearchJson(data.allPosts);
@@ -2058,6 +2123,8 @@ async function main() {
       });
       console.log('✓ Copied favicon files');
   }
+  
+  await runPostBuildSanityCheck();
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(`
@@ -2069,6 +2136,40 @@ Sitemap:      dist/sitemap.xml
 Build time:   ${elapsed}s
 =====================
 `);
+}
+
+async function runPostBuildSanityCheck() {
+  console.log('\n--- Running Post-Build Broken Link Sanity Check ---');
+  let brokenLinksFound = 0;
+  
+  function walk(dir) {
+    const list = fs.readdirSync(dir);
+    for (const item of list) {
+      const fullPath = path.join(dir, item);
+      const stat = fs.statSync(fullPath);
+      if (stat.isDirectory()) {
+        walk(fullPath);
+      } else if (fullPath.endsWith('.html')) {
+        const content = fs.readFileSync(fullPath, 'utf-8');
+        const brokenRegex = /href=["'](?:#|undefined|null|)["']/g;
+        let match;
+        while ((match = brokenRegex.exec(content)) !== null) {
+          console.warn(`[WARNING] Broken link found in ${fullPath}: href="${match[1]}"`);
+          brokenLinksFound++;
+        }
+      }
+    }
+  }
+  
+  if (fs.existsSync('dist')) {
+    walk('dist');
+  }
+  
+  if (brokenLinksFound === 0) {
+    console.log('✓ No broken placeholder links (href="#", href="", etc.) found!');
+  } else {
+    console.warn(`! Found ${brokenLinksFound} broken link(s) across generated HTML files.`);
+  }
 }
 
 main().catch((err) => {
