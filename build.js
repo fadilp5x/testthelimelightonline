@@ -21,6 +21,12 @@ const escapeJs = (str) => str
   ? str.replace(/\\/g, '\\\\').replace(/`/g, '\`').replace(/\$/g, '\\$')
   : '';
 // Must match the safeSlug used when writing files to dist/article/
+function estimateReadingTime(text) {
+  if (!text) return 1;
+  const words = text.replace(/<[^>]*>?/gm, '').split(/\s+/).length;
+  return Math.ceil(words / 200) || 1;
+}
+
 const normalizeSlug = (slug) => slug.replace(/[^a-z0-9\-]/gi, '-').toLowerCase();
 
 function calcReadingTime(htmlContent) {
@@ -189,9 +195,9 @@ function getOrganizationSchema() {
     "logo": `${SITE_URL}/favicon/favicon-192x192.png`,
     "description": "The Limelight Online is a bimonthly digital magazine covering South Asian literature, essays, arts and culture.",
     "sameAs": [
-      "https://www.instagram.com/thelimelightonline",
-      "https://twitter.com/thelimelightonline",
-      "https://www.facebook.com/thelimelightonline"
+      "https://www.instagram.com/the_limelight_bimonthly/",
+      "https://www.facebook.com/profile.php?id=100091897094886",
+      "https://www.youtube.com/@Thelimelightonline"
     ],
     "contactPoint": {
       "@type": "ContactPoint",
@@ -225,7 +231,7 @@ function getBreadcrumbSchema(breadcrumbs) {
 function buildRelatedArticlesHtml(currentArticle, allPosts) {
   // Same category first, exclude current
   const sameCategory = allPosts.filter(p =>
-    p.category_id === currentArticle.category_id && p.id !== currentArticle.id
+    p.category_id === currentArticle.category_id && p.id !== currentArticle.id && p.slug
   ).slice(0, 3);
 
   let related = [...sameCategory];
@@ -264,21 +270,51 @@ function buildRelatedArticlesHtml(currentArticle, allPosts) {
   </section>`;
 }
 
+function buildAuthorSocialLinksHtml(author) {
+  if (!author) return '';
+  const socialLinks = [];
+  if (author.twitter_url && author.twitter_url.trim()) {
+    socialLinks.push(`<a href="${author.twitter_url}" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><i class="fab fa-x-twitter"></i></a>`);
+  }
+  if (author.instagram_url && author.instagram_url.trim()) {
+    socialLinks.push(`<a href="${author.instagram_url}" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>`);
+  }
+  if (author.linkedin_url && author.linkedin_url.trim()) {
+    socialLinks.push(`<a href="${author.linkedin_url}" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>`);
+  }
+  if (author.website_url && author.website_url.trim()) {
+    socialLinks.push(`<a href="${author.website_url}" target="_blank" rel="noopener noreferrer" aria-label="Website"><i class="fas fa-globe"></i></a>`);
+  }
+  if (author.academia_url && author.academia_url.trim()) {
+    socialLinks.push(`<a href="${author.academia_url}" target="_blank" rel="noopener noreferrer" aria-label="Academia.edu"><i class="fas fa-graduation-cap"></i></a>`);
+  }
+  if (author.orcid_url && author.orcid_url.trim()) {
+    socialLinks.push(`<a href="${author.orcid_url}" target="_blank" rel="noopener noreferrer" aria-label="ORCID"><i class="fab fa-orcid"></i></a>`);
+  }
+
+  return socialLinks.length > 0
+    ? `<div class="author-bio-social">${socialLinks.join('')}</div>`
+    : '';
+}
+
 function buildAuthorBioCardHtml(article) {
-  const authorName = article.authors?.full_name || 'The Limelight';
-  const authorAvatar = article.authors?.avatar_url ||
+  const author = article.authors || {};
+  const authorName = author.full_name || 'The Limelight';
+  const authorAvatar = author.avatar_url ||
     'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 80 80%22%3E%3Crect width=%2280%22 height=%2280%22 fill=%22%238B4513%22/%3E%3Ctext x=%2240%22 y=%2252%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2236%22%3E%3F%3C/text%3E%3C/svg%3E';
   const authorId = article.author_id || '';
-  const authorLink = authorId ? `/author/${authorId}.html` : '#';
-  const bio = article.authors?.bio || '';
+  const authorLink = authorId ? `<a href="/author/${authorId}.html" class="author-bio-name">${authorName}</a>` : `<span class="author-bio-name">${authorName}</span>`;
+  const bio = author.bio || '';
+  const socialRowHtml = buildAuthorSocialLinksHtml(author);
 
   return `
   <div class="author-bio-card">
     <div class="author-bio-label">Author</div>
     <img src="${authorAvatar}" alt="${escapeQuotes(authorName)}" class="author-bio-avatar"
          onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 80 80%22%3E%3Crect width=%2280%22 height=%2280%22 fill=%22%238B4513%22/%3E%3Ctext x=%2240%22 y=%2252%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2236%22%3E%3F%3C/text%3E%3C/svg%3E'">
-    <a href="${authorLink}" class="author-bio-name">${authorName}</a>
+    ${authorLink}
     ${bio ? `<p class="author-bio-text">${bio}</p>` : ''}
+    ${socialRowHtml}
   </div>`;
 }
 
@@ -299,28 +335,22 @@ async function fetchAllData() {
     })
   );
 
-  const baseSelect = 'id, title, slug, excerpt, image_url, created_at, updated_at, category_id, author_id, is_featured, authors(full_name, avatar_url, bio), categories(name, slug)';
+  const baseSelect = 'id, title, slug, content, excerpt, image_url, created_at, updated_at, category_id, author_id, is_featured, status, publish_date, authors(full_name, avatar_url, bio), categories(name, slug)';
 
-  const { data: featuredPosts, error: e2 } = await supabase
-    .from('posts')
-    .select(baseSelect)
-    .eq('is_featured', true)
-    .order('created_at', { ascending: false })
-    .limit(5);
-  if (e2) throw new Error('Featured posts fetch failed: ' + e2.message);
-
-  const { data: latestPosts, error: e3 } = await supabase
-    .from('posts')
-    .select(baseSelect)
-    .order('created_at', { ascending: false })
-    .range(0, 8);
-  if (e3) throw new Error('Latest posts fetch failed: ' + e3.message);
-
-  const { data: allPosts, error: e4 } = await supabase
+  const { data: rawAllPosts, error: e4 } = await supabase
     .from('posts')
     .select(baseSelect)
     .order('created_at', { ascending: false });
   if (e4) throw new Error('All posts fetch failed: ' + e4.message);
+
+  const now = new Date();
+  
+  // Filter for public listings
+  const allPosts = rawAllPosts.filter(p => p.status === 'published' && (!p.publish_date || new Date(p.publish_date) <= now));
+
+  // Derive latest and featured locally to respect the date filter without under-fetching
+  const featuredPosts = allPosts.filter(p => p.is_featured).slice(0, 5);
+  const latestPosts = allPosts.slice(0, 8);
 
   const { data: allAuthors, error: e5 } = await supabase
     .from('authors')
@@ -331,10 +361,10 @@ async function fetchAllData() {
   console.log(
     `Fetched: ${categoriesWithChildren.length} categories, ` +
     `${featuredPosts.length} featured, ${latestPosts.length} latest, ` +
-    `${allPosts.length} total articles`
+    `${allPosts.length} public articles, ${rawAllPosts.length} total raw articles`
   );
 
-  return { categoriesWithChildren, featuredPosts, latestPosts, allPosts, allAuthors };
+  return { categoriesWithChildren, featuredPosts, latestPosts, allPosts, rawAllPosts, allAuthors };
 }
 
 // ─── Phase 2: Homepage Helpers ─────────────────────────────────────────────────
@@ -371,26 +401,74 @@ function generateFooterCategoriesHtml(categoriesWithChildren) {
 }
 
 function generateCarouselHtml(featuredPosts) {
-  const slides = featuredPosts.map((p, i) => `
-    <div class="carousel-slide ${i === 0 ? 'active' : ''}">
-      <img src="${p.image_url}" class="carousel-image" alt="${escapeQuotes(p.title)}" width="1200" height="520" style="aspect-ratio: 1200/520; object-fit: cover;">
-      <div class="carousel-overlay">
-        <div class="carousel-meta">
-          <span>${p.categories?.name || 'General'}</span>
-          <span>&bull;</span>
-          <span>${new Date(p.created_at).toLocaleDateString()}</span>
+  if (!featuredPosts || featuredPosts.length === 0) return '';
+  
+  const slidesHtml = featuredPosts.map((p, i) => {
+    const categoryName = p.categories?.name || '';
+    const authorName = p.authors?.full_name || '';
+    const authorAvatar = p.authors?.avatar_url || '';
+    const readingTime = estimateReadingTime(p.content || p.excerpt || '');
+    const date = new Date(p.created_at).toLocaleDateString('en-GB', {
+      day: 'numeric', month: 'long', year: 'numeric'
+    });
+    const slug = normalizeSlug(p.slug);
+    
+    return `
+    <div class="hero-slide ${i === 0 ? 'active' : ''}" 
+         data-index="${i}" 
+         style="background-image: url('${p.image_url}');">
+      <div class="hero-cinematic-overlay"></div>
+      <div class="hero-content">
+        <div class="hero-eyebrow">
+          <span class="hero-category">${categoryName}</span>
+          <span class="hero-dot">•</span>
+          <span class="hero-readtime">${readingTime} MIN READ</span>
         </div>
-        <h2 class="carousel-title"><a href="/article/${normalizeSlug(p.slug)}" style="color:white">${p.title}</a></h2>
-        <div class="carousel-excerpt">${p.excerpt || ''}</div>
+        <h2 class="hero-title">${p.title}</h2>
+        <p class="hero-excerpt">${(p.excerpt || '').substring(0, 160)}</p>
+        <div class="hero-author-card">
+          ${authorAvatar
+            ? `<img src="${authorAvatar}" alt="${authorName}" class="hero-author-avatar">`
+            : `<div class="hero-author-initials">${authorName.charAt(0)}</div>`
+          }
+          <div class="hero-author-info">
+            <span class="hero-author-name">${authorName}</span>
+            <span class="hero-author-date">${date}</span>
+          </div>
+        </div>
+        <a href="/article/${slug}" class="hero-cta">
+          Read Article <span class="hero-cta-arrow">→</span>
+        </a>
       </div>
-    </div>`).join('\n');
-
-  const indicators = featuredPosts.map((_, i) =>
-    `<div class="indicator ${i === 0 ? 'active' : ''}" onclick="goToSlide(${i})"></div>`
-  ).join('\n');
-
-  return { slides, indicators };
+    </div>`;
+  }).join('');
+  
+  const indexPanelHtml = featuredPosts.map((p, i) => `
+    <div class="hero-index-item ${i === 0 ? 'active' : ''}" data-slide="${i}">
+      <span class="hero-index-num">0${i + 1}</span>
+      <img src="${p.image_url}" alt="" class="hero-index-thumb">
+      <span class="hero-index-title">${p.title}</span>
+    </div>
+  `).join('');
+  
+  return `
+  <div class="cinematic-hero" id="cinematicHero">
+    <div class="hero-slides-wrapper">${slidesHtml}</div>
+    <div class="hero-index-panel">${indexPanelHtml}</div>
+    <div class="hero-nav">
+      <button class="hero-prev" aria-label="Previous article">←</button>
+      <button class="hero-next" aria-label="Next article">→</button>
+    </div>
+    <div class="hero-progress-bar">
+      <div class="hero-progress-fill" id="heroProgressFill"></div>
+    </div>
+    <div class="hero-counter">
+      <span id="heroCurrentSlide">01</span> / 
+      <span>${String(featuredPosts.length).padStart(2, '0')}</span>
+    </div>
+  </div>`;
 }
+
 
 function generateArticleCardsHtml(latestPosts) {
   return latestPosts.map(p => {
@@ -419,6 +497,7 @@ function generateArticleCardsHtml(latestPosts) {
 function buildNavHtml(categoriesWithChildren) {
   let html = `<li class="nav-item"><a href="/index.html" class="nav-link">Home</a></li>`;
   categoriesWithChildren.forEach(parent => {
+    if (!parent.slug) return;
     if (parent.children && parent.children.length > 0) {
       html += `<li class="nav-item has-dropdown">
         <a href="/category/${parent.slug}.html" class="nav-link">
@@ -439,32 +518,7 @@ function buildNavHtml(categoriesWithChildren) {
   return html;
 }
 
-function buildCarouselHtml(featuredPosts) {
-  if (!featuredPosts || featuredPosts.length === 0) return { slidesHtml: '', indicatorsHtml: '' };
-  const slidesHtml = featuredPosts.map((p, i) => {
-    const authorName = p.authors?.full_name || 'The Limelight';
-    const categoryName = p.categories?.name || 'General';
-    const date = new Date(p.created_at).toLocaleDateString('en-IN', {day:'numeric',month:'long',year:'numeric'});
-    return `<div class="carousel-slide ${i === 0 ? 'active' : ''}">
-      <img src="${p.image_url}" class="carousel-image" alt="${p.title}" loading="${i === 0 ? 'eager' : 'lazy'}">
-      <div class="carousel-overlay">
-        <div class="carousel-meta">
-          <span class="carousel-category">${categoryName}</span>
-          <span>&bull;</span>
-          <span>${date}</span>
-        </div>
-        <h2 class="carousel-title">
-          <a href="/article/${p.slug}/" style="color:white;text-decoration:none;">${p.title}</a>
-        </h2>
-        <div class="carousel-excerpt">${p.excerpt || ''}</div>
-      </div>
-    </div>`;
-  }).join('\n');
-  const indicatorsHtml = featuredPosts.map((_, i) =>
-    `<div class="indicator ${i === 0 ? 'active' : ''}" onclick="goToSlide(${i})"></div>`
-  ).join('\n');
-  return { slidesHtml, indicatorsHtml };
-}
+
 
 function buildArticleCardsHtml(posts) {
   if (!posts || posts.length === 0) return '<p style="text-align:center;color:#888;">No articles found.</p>';
@@ -493,43 +547,86 @@ function buildArticleCardsHtml(posts) {
 
 function buildIndexScripts() {
   return `<script>
-let currentSlide = 0;
-let slideInterval;
-
-function changeSlide(dir) {
-  const slides = document.querySelectorAll('.carousel-slide');
-  const dots = document.querySelectorAll('.indicator');
+(function initCinematicHero() {
+  const DURATION = 8000;
+  const slides = document.querySelectorAll('.hero-slide');
+  const indexItems = document.querySelectorAll('.hero-index-item');
+  const progressFill = document.getElementById('heroProgressFill');
+  const counterEl = document.getElementById('heroCurrentSlide');
+  
   if (!slides.length) return;
-  slides[currentSlide].classList.remove('active');
-  dots[currentSlide] && dots[currentSlide].classList.remove('active');
-  currentSlide = (currentSlide + dir + slides.length) % slides.length;
-  slides[currentSlide].classList.add('active');
-  dots[currentSlide] && dots[currentSlide].classList.add('active');
-  resetTimer();
-}
-
-function goToSlide(index) {
-  const slides = document.querySelectorAll('.carousel-slide');
-  const dots = document.querySelectorAll('.indicator');
-  if (!slides.length) return;
-  slides[currentSlide].classList.remove('active');
-  dots[currentSlide] && dots[currentSlide].classList.remove('active');
-  currentSlide = index;
-  slides[currentSlide].classList.add('active');
-  dots[currentSlide] && dots[currentSlide].classList.add('active');
-  resetTimer();
-}
-
-function startSlideTimer() { slideInterval = setInterval(() => changeSlide(1), 5000); }
-function resetTimer() { clearInterval(slideInterval); startSlideTimer(); }
+  
+  let current = 0;
+  let timer = null;
+  let progressTimer = null;
+  let paused = false;
+  
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    if (indexItems[current]) indexItems[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    if (indexItems[current]) indexItems[current].classList.add('active');
+    if (counterEl) counterEl.textContent = String(current + 1).padStart(2, '0');
+    startProgress();
+  }
+  
+  function startProgress() {
+    if (progressFill) {
+      progressFill.style.transition = 'none';
+      progressFill.style.width = '0%';
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          progressFill.style.transition = \`width \${DURATION}ms linear\`;
+          progressFill.style.width = '100%';
+        });
+      });
+    }
+    clearTimeout(timer);
+    if (!paused) timer = setTimeout(() => goTo(current + 1), DURATION);
+  }
+  
+  function pause() { paused = true; clearTimeout(timer); }
+  function resume() { paused = false; startProgress(); }
+  
+  // Buttons
+  const prevBtn = document.querySelector('.hero-prev');
+  const nextBtn = document.querySelector('.hero-next');
+  if (prevBtn) prevBtn.addEventListener('click', () => goTo(current - 1));
+  if (nextBtn) nextBtn.addEventListener('click', () => goTo(current + 1));
+  
+  // Index panel
+  indexItems.forEach((item, i) => {
+    item.addEventListener('click', () => goTo(i));
+  });
+  
+  // Hover pause
+  const hero = document.getElementById('cinematicHero');
+  if (hero) {
+    hero.addEventListener('mouseenter', pause);
+    hero.addEventListener('mouseleave', resume);
+  }
+  
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') goTo(current - 1);
+    if (e.key === 'ArrowRight') goTo(current + 1);
+  });
+  
+  // Swipe (mobile)
+  let touchStartX = 0;
+  if (hero) {
+    hero.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    hero.addEventListener('touchend', e => {
+      const diff = touchStartX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 50) goTo(current + (diff > 0 ? 1 : -1));
+    }, { passive: true });
+  }
+  
+  startProgress();
+})();
 
 document.addEventListener('DOMContentLoaded', () => {
-  startSlideTimer();
-
-  const prevBtn = document.querySelector('.carousel-prev');
-  const nextBtn = document.querySelector('.carousel-next');
-  if (prevBtn) prevBtn.addEventListener('click', () => changeSlide(-1));
-  if (nextBtn) nextBtn.addEventListener('click', () => changeSlide(1));
 
   const toggle = document.querySelector('.mobile-nav-toggle');
   const mainNav = document.querySelector('.main-nav');
@@ -710,7 +807,7 @@ function generateIndexHtml(data) {
     console.log('Style blocks found:', styleContents.length);
   }
   const navItemsHtml = buildNavHtml(categoriesWithChildren);
-  const { slidesHtml, indicatorsHtml } = buildCarouselHtml(featuredPosts);
+  const heroHtml = generateCarouselHtml(featuredPosts);
   const cardsHtml = buildArticleCardsHtml(latestPosts);
   const footerCatsHtml = categoriesWithChildren.map(p =>
     `<li><a href="/category/${p.slug}.html">${p.name}</a></li>`
@@ -729,7 +826,7 @@ ${getSEOHeadTags({
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://i.ibb.co">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;1,400&family=Montserrat:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 ${getFaviconHtml()}
 ${allStyles}
@@ -780,7 +877,7 @@ ${getDarkModeCSS()}
 .nav-link {
   display: block;
   padding: 8px 12px;
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Lato', sans-serif;
   font-size: 0.85rem;
   font-weight: 500;
   color: #333;
@@ -818,7 +915,7 @@ ${getDarkModeCSS()}
   color: #333;
   text-decoration: none;
   font-size: 0.85rem;
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Lato', sans-serif;
   border-bottom: 1px solid #f0f0f0;
   transition: background 0.2s, color 0.2s;
 }
@@ -1022,37 +1119,30 @@ ${getDarkModeInitScript()}
 <script type="application/ld+json">${getWebSiteSchema()}</script>
 </head>
 <body>
-<header class="site-header">
-  <div class="header-inner">
-    <a href="/index.html" class="logo-link">
-      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight" class="logo-img">
+<header class="header">
+  <div class="container header-content">
+    <a href="/index.html" class="site-title">
+      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight">
     </a>
-    <button class="mobile-nav-toggle" aria-label="Toggle navigation">
-      <i class="fas fa-bars"></i>
-    </button>
-    <nav class="main-nav">
-      <ul class="nav-list" id="navMenu">
-        ${navItemsHtml}
-        <li class="nav-item">${getDarkModeToggleBtn()}</li>
-        <li class="nav-item">
-          <div class="search-container" id="searchContainer">
-            <i class="fas fa-search search-icon" id="searchIcon"></i>
-            <input type="text" class="search-input" id="searchInput" placeholder="Search articles...">
-            <div class="search-results" id="searchResults"></div>
-          </div>
-        </li>
-      </ul>
-    </nav>
+    <div class="mobile-controls" style="display: flex; gap: 15px; align-items: center;">
+      <button class="mobile-nav-toggle" aria-label="Toggle navigation">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <ul class="nav-menu" id="navMenu">
+      ${navItemsHtml}
+      <li class="nav-item">${getDarkModeToggleBtn()}</li>
+      <li class="nav-item">
+        <div class="search-container" id="searchContainer">
+          <input type="text" class="search-input" id="searchInput" placeholder="Search articles...">
+          <i class="fas fa-search search-icon" id="searchIcon"></i>
+          <div class="search-results" id="searchResults"></div>
+        </div>
+      </li>
+    </ul>
   </div>
 </header>
-<section class="featured-section" id="featuredCarousel">
-  <div class="carousel-container" id="carouselContainer">
-    ${slidesHtml}
-  </div>
-  <button class="carousel-btn carousel-prev"><i class="fas fa-chevron-left"></i></button>
-  <button class="carousel-btn carousel-next"><i class="fas fa-chevron-right"></i></button>
-  <div class="carousel-indicators" id="carouselIndicators">${indicatorsHtml}</div>
-</section>
+${heroHtml}
 <main class="main-content">
   <h2 style="text-align:center;font-family:'Playfair Display',serif;color:#8B4513;margin:40px 0 30px;font-size:2rem;">Latest Articles</h2>
   <div class="articles-grid" id="articlesGrid">${cardsHtml}</div>
@@ -1060,27 +1150,65 @@ ${getDarkModeInitScript()}
   </div>
 </main>
 <footer class="site-footer">
-  <div class="footer-grid">
-    <div class="footer-col">
-      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight" style="height:50px;margin-bottom:15px;">
-      <p style="color:#ccc;font-size:0.9rem;">Literature, essays, arts and culture.</p>
+  <div class="footer-inner">
+
+    <!-- Column 1: Brand + About tagline -->
+    <div class="footer-col footer-brand">
+      <h3 class="footer-logo">THE LIMELIGHT</h3>
+      <p class="footer-tagline">
+        A bimonthly academic web magazine devoted to South Asian
+        literature, Islamic thought, arts and culture — writing for
+        a world that still believes ideas matter.
+      </p>
+      <a href="/contact.html" class="footer-about-link">
+        About The Limelight &rarr;
+      </a>
     </div>
+
+    <!-- Column 2: Explore -->
     <div class="footer-col">
-      <h4 class="footer-heading">Categories</h4>
-      <ul class="footer-links" id="footerCategories">${footerCatsHtml}</ul>
-    </div>
-    <div class="footer-col">
-      <h4 class="footer-heading">Quick Links</h4>
+      <h4 class="footer-col-title">Explore</h4>
       <ul class="footer-links">
         <li><a href="/index.html">Home</a></li>
         <li><a href="/authors.html">Authors</a></li>
-        <li><a href="/contact.html">Contact</a></li>
+        <li><a href="/contact.html">Contact Us</a></li>
         <li><a href="/sitemap.xml">Sitemap</a></li>
       </ul>
     </div>
-  </div>
+
+    <!-- Column 3: Categories -->
+    <div class="footer-col">
+      <h4 class="footer-col-title">Categories</h4>
+      <ul class="footer-links" id="footerCategories">
+        ${footerCatsHtml}
+      </ul>
+    </div>
+
+    <!-- Column 4: Follow us -->
+    <div class="footer-col">
+      <h4 class="footer-col-title">Follow Us</h4>
+      <div class="footer-social">
+        <a href="https://www.instagram.com/the_limelight_bimonthly/" target="_blank" rel="noopener" aria-label="Instagram">
+          <i class="fab fa-instagram"></i>
+        </a>
+        <a href="https://www.facebook.com/profile.php?id=100091897094886#" target="_blank" rel="noopener" aria-label="Facebook">
+          <i class="fab fa-facebook-f"></i>
+        </a>
+        <a href="https://www.youtube.com/@Thelimelightonline" target="_blank" rel="noopener" aria-label="YouTube">
+          <i class="fab fa-youtube"></i>
+        </a>
+      </div>
+    </div>
+
+  </div><!-- /.footer-inner -->
+
   <div class="footer-bottom">
-    <p>&copy; ${new Date().getFullYear()} The Limelight Online. All rights reserved.</p>
+    <p>&copy; 2025 The Limelight Online. All rights reserved.</p>
+    <p class="footer-bottom-links">
+      <a href="/contact.html">Contact</a>
+      &nbsp;&middot;&nbsp;
+      <a href="/sitemap.xml">Sitemap</a>
+    </p>
   </div>
 </footer>
 __SCRIPTS_PLACEHOLDER__
@@ -1099,10 +1227,16 @@ ${getDarkModeToggleScript()}
 async function generateCategoryPages(data) {
   const { categoriesWithChildren, allPosts } = data;
   
-  // Read styles ONCE outside the loop for performance
+  // Flatten categories array for easy lookup
+  const categories = [];
+  categoriesWithChildren.forEach(c => {
+    categories.push(c);
+    if (c.children) categories.push(...c.children);
+  });
+
   const originalIndex = fs.readFileSync('index.html', 'utf-8');
   const styleContents = [];
-  const styleRegex = /<style[^>]*>([\\s\\S]*?)<\/style>/gi;
+  const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
   let styleMatch;
   while ((styleMatch = styleRegex.exec(originalIndex)) !== null) {
     styleContents.push(styleMatch[1]);
@@ -1111,30 +1245,64 @@ async function generateCategoryPages(data) {
     ? `<style>\n${styleContents.join('\n')}\n</style>`
     : '';
 
-  const allCategories = [];
-  categoriesWithChildren.forEach(parent => {
-    allCategories.push(parent);
-    if (parent.children) parent.children.forEach(child => allCategories.push(child));
-  });
+  const navItemsHtml = buildNavHtml(categoriesWithChildren);
+  const footerCatsHtml = categoriesWithChildren
+    .filter(c => !c.parent_id && c.slug)
+    .map(c => `<li><a href="/category/${c.slug}.html">${c.name}</a></li>`)
+    .join('\n');
 
-  fs.mkdirSync('dist/category', { recursive: true });
+  categories.forEach(category => {
+    // 1) Find subcategories
+    const subCategories = categories.filter(c => c.parent_id === category.id);
+    const subCatsHtml = subCategories.length > 0
+      ? `<div class="subcats-nav">
+           ${subCategories.map(sub => `<a href="/category/${sub.slug}.html" class="subcat-link">${sub.name}</a>`).join('')}
+         </div>`
+      : '';
 
-  for (const category of allCategories) {
-    const categoryPosts = allPosts.filter(p => {
-      return p.category_id === category.id;
-    });
+    // 2) Filter posts to this category OR its subcategories
+    const categoryIds = [category.id, ...subCategories.map(c => c.id)];
+    const catPosts = allPosts.filter(p => categoryIds.includes(p.category_id));
 
-    const navHtml = buildNavHtml(categoriesWithChildren);
-    const cardsHtml = buildArticleCardsHtml(categoryPosts);
-    const pageTitle = `${category.name} - Articles`;
-    const pageDescription = `Read all articles in ${category.name} on The Limelight Online`;
+    // 3) Split posts into hero (1), featured (next 3), grid (rest)
+    const heroPost = catPosts.length > 0 ? catPosts[0] : null;
+    const featuredPosts = catPosts.slice(1, 4);
+    const gridPosts = catPosts.slice(4);
 
+    const pageTitle = `${category.name} | The Limelight`;
+    const pageDescription = category.description || `Explore articles in ${category.name}`;
+
+    // 4) Build specific HTML sections
+    const catHeroHtml = heroPost ? `
+      <a href="/article/${normalizeSlug(heroPost.slug)}/" class="cat-hero-card">
+        <img src="${heroPost.image_url}" alt="" class="cat-hero-img">
+        <div class="cat-hero-overlay"></div>
+        <div class="cat-hero-content">
+          <h2 style="font-family:'Playfair Display',serif; font-size:42px; margin:0 0 15px;">${heroPost.title}</h2>
+          <p style="font-family:'Lato',sans-serif; font-size:16px; opacity:0.9;">${(heroPost.excerpt || '').substring(0, 150)}</p>
+        </div>
+      </a>
+    ` : '';
+
+    const catFeaturedHtml = featuredPosts.length ? `
+      <div class="cat-featured-grid">
+        ${buildArticleCardsHtml(featuredPosts)}
+      </div>
+    ` : '';
+
+    const catGridHtml = gridPosts.length ? `
+      <div class="articles-grid">
+        ${buildArticleCardsHtml(gridPosts)}
+      </div>
+    ` : '';
+
+    // 5) Build full HTML
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${pageTitle} | The Limelight</title>
+<title>${pageTitle}</title>
 <meta name="description" content="${pageDescription}">
 <meta property="og:title" content="${pageTitle}">
 <meta property="og:description" content="${pageDescription}">
@@ -1143,195 +1311,129 @@ async function generateCategoryPages(data) {
 <link rel="canonical" href="${SITE_URL}/category/${category.slug}.html">
 <meta name="robots" content="index, follow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://i.ibb.co">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;1,400&family=Montserrat:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+${getFaviconHtml()}
 ${allStyles}
 ${getDarkModeCSS()}
 <style>
-/* ── CATEGORY PAGE STYLES ── */
-.category-header {
-  background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
-  color: white;
-  padding: 40px 20px;
-  text-align: center;
-  margin-bottom: 40px;
-}
-
-.category-header h1 {
-  font-family: 'Playfair Display', serif;
-  font-size: 2.5rem;
-  margin: 0;
-  margin-bottom: 10px;
-}
-
-.category-header p {
-  font-size: 1.1rem;
-  margin: 0;
-  opacity: 0.95;
-}
-
-.articles-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 30px;
-  max-width: 1300px;
-  margin: 0 auto;
-  padding: 0 20px 60px;
-}
-
-.article-card {
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.article-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-}
-
-.article-image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-}
-
-.article-content {
-  padding: 20px;
-}
-
-.article-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.3rem;
-  margin: 0 0 10px 0;
-  line-height: 1.3;
-}
-
-.article-title a {
-  color: #333;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.article-title a:hover {
-  color: #8B4513;
-}
-
-.article-excerpt {
-  font-size: 0.95rem;
-  color: #666;
-  margin: 10px 0;
-  line-height: 1.5;
-}
-
-.article-meta {
-  font-size: 0.85rem;
-  color: #999;
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-}
-
-.no-articles {
-  text-align: center;
-  padding: 60px 20px;
-  color: #666;
-}
-
-.no-articles h2 {
-  font-size: 1.5rem;
-  margin-bottom: 10px;
-}
-
-.no-articles p {
-  font-size: 1.1rem;
-}
-
-/* Ensure footer stays at bottom */
-body {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-main {
-  flex: 1;
-}
+/* ── HEADER LAYOUT FIX ── */
+.header { position: sticky; top: 0; z-index: 1000; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+.header-content { display: flex; align-items: center; justify-content: space-between; height: 80px; }
+.site-title img { height: 50px; width: auto; display: block; }
+.nav-menu { display: flex; align-items: center; gap: 20px; margin: 0; padding: 0; list-style: none; }
+.nav-item { position: relative; }
+.nav-link { font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 600; color: #333; text-decoration: none; text-transform: uppercase; padding: 10px 0; transition: color 0.3s; }
+.nav-link:hover { color: #8B4513; }
+.mobile-nav-toggle { display: none; background: none; border: none; font-size: 24px; color: #333; cursor: pointer; }
+[data-theme="dark"] .header { background: #1a1a1a; }
+[data-theme="dark"] .nav-link, [data-theme="dark"] .mobile-nav-toggle { color: #f5f5f5; }
+[data-theme="dark"] .nav-link:hover { color: #C89A47; }
 </style>
 ${getDarkModeInitScript()}
 </head>
 <body>
 
-<header class="site-header">
-  <div class="header-inner">
-    <a href="/index.html" class="logo-link">
-      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight" class="logo-img">
+<header class="header">
+  <div class="container header-content">
+    <a href="/index.html" class="site-title">
+      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight">
     </a>
-    <button class="mobile-nav-toggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
-    <nav class="main-nav">
-      <ul class="nav-list" id="navMenu">
-        ${navHtml}
-        <li class="nav-item">${getDarkModeToggleBtn()}</li>
-      </ul>
-    </nav>
+    <div class="mobile-controls" style="display: flex; gap: 15px; align-items: center;">
+      <button class="mobile-nav-toggle" aria-label="Toggle navigation">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <ul class="nav-menu" id="navMenu">
+      ${navItemsHtml}
+      <li class="nav-item">${getDarkModeToggleBtn()}</li>
+    </ul>
   </div>
 </header>
 
-<main>
-  <div class="category-header">
-    <h1>${category.name}</h1>
-    <p>${categoryPosts.length} article${categoryPosts.length !== 1 ? 's' : ''}</p>
+<main class="main-content" style="padding-top: 0; max-width: 100%;">
+  
+  <header class="cat-page-header">
+    <h1 class="cat-page-title">${category.name}</h1>
+    <p class="cat-page-desc">${category.description || ''}</p>
+    ${subCatsHtml}
+  </header>
+
+  <div class="cat-layout-wrapper">
+    ${catHeroHtml}
+    ${catFeaturedHtml}
+    ${catGridHtml}
+    
+    ${catPosts.length === 0 ? '<p style="text-align:center; padding: 100px 0; font-family:\'Lato\',sans-serif; color:#666;">No articles in this category yet.</p>' : ''}
   </div>
 
-  ${categoryPosts.length > 0
-    ? `<div class="articles-grid">${cardsHtml}</div>`
-    : `<div class="no-articles">
-        <h2>No Articles Yet</h2>
-        <p>There are no published articles in this category yet. Check back soon!</p>
-      </div>`
-  }
 </main>
 
 <footer class="site-footer">
-  <div class="footer-grid">
-    <div class="footer-section">
-      <h3>THE LIMELIGHT</h3>
-      <p>Insightful articles, captivating stories, and in-depth analysis on a variety of topics that matter.</p>
+  <div class="footer-inner">
+    <div class="footer-col footer-brand">
+      <h3 class="footer-logo">THE LIMELIGHT</h3>
+      <p class="footer-tagline">
+        A bimonthly academic web magazine devoted to South Asian
+        literature, Islamic thought, arts and culture — writing for
+        a world that still believes ideas matter.
+      </p>
+      <a href="/contact.html" class="footer-about-link">About The Limelight &rarr;</a>
     </div>
-    <div class="footer-section">
-      <h3>Categories</h3>
-      <ul>
-        ${allCategories
-          .filter(c => !c.parent_id) // Only show parent categories in footer
-          .map(c => `<li><a href="/category/${c.slug}.html">${c.name}</a></li>`)
-          .join('')}
-      </ul>
-    </div>
-    <div class="footer-section">
-      <h3>Support</h3>
-      <ul>
-        <li><a href="/contact.html">Contact</a></li>
+    <div class="footer-col">
+      <h4 class="footer-col-title">Explore</h4>
+      <ul class="footer-links">
+        <li><a href="/index.html">Home</a></li>
+        <li><a href="/authors.html">Authors</a></li>
+        <li><a href="/contact.html">Contact Us</a></li>
         <li><a href="/sitemap.xml">Sitemap</a></li>
       </ul>
     </div>
+    <div class="footer-col">
+      <h4 class="footer-col-title">Categories</h4>
+      <ul class="footer-links" id="footerCategories">
+        ${footerCatsHtml}
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4 class="footer-col-title">Follow Us</h4>
+      <div class="footer-social">
+        <a href="https://www.instagram.com/the_limelight_bimonthly/" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://www.facebook.com/profile.php?id=100091897094886#" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+        <a href="https://www.youtube.com/@Thelimelightonline" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+      </div>
+    </div>
   </div>
   <div class="footer-bottom">
-    <p>&copy; 2025 The Limelight Online. All rights reserved.</p>
+    <p>&copy; ${new Date().getFullYear()} The Limelight Online. All Rights Reserved.</p>
   </div>
 </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const toggle = document.querySelector('.mobile-nav-toggle');
+  const navMenu = document.querySelector('.nav-menu');
+  if (toggle && navMenu) {
+    toggle.addEventListener('click', () => {
+      navMenu.classList.toggle('active');
+    });
+  }
+});
+</script>
 ${getDarkModeToggleScript()}
 </body>
 </html>`;
 
-    const filePath = path.join('dist', 'category', `${category.slug}.html`);
+    const categoryDir = path.join('dist', 'category');
+    if (!fs.existsSync(categoryDir)) fs.mkdirSync(categoryDir, { recursive: true });
+    const filePath = path.join(categoryDir, `${category.slug}.html`);
     fs.writeFileSync(filePath, html);
-    console.log(`✓ Category: /category/${category.slug}.html (${categoryPosts.length} posts)`);
-  }
+    console.log(`✓ Category: /category/${category.slug}.html (${catPosts.length} posts)`);
+  });
 }
+
 async function generateAuthorPages(data) {
   const { categoriesWithChildren, allPosts, allAuthors } = data;
   if (!allAuthors || allAuthors.length === 0) {
@@ -1341,7 +1443,7 @@ async function generateAuthorPages(data) {
 
   const originalIndex = fs.readFileSync('index.html', 'utf-8');
   const styleContents = [];
-  const styleRegex = /<style[^>]*>([\\s\\S]*?)<\/style>/gi;
+  const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
   let styleMatch;
   while ((styleMatch = styleRegex.exec(originalIndex)) !== null) {
     styleContents.push(styleMatch[1]);
@@ -1382,16 +1484,29 @@ async function generateAuthorPages(data) {
 <meta property="og:description" content="${escapeQuotes(pageDesc)}">
 <meta property="og:url" content="${authorUrl}">
 <meta property="og:type" content="profile">
-<meta property="og:image" content="${escapeQuotes(author.avatar_url || '')}">
+<meta property="og:image" content="${escapeQuotes(author.avatar_url || `${SITE_URL}/favicon/favicon-512x512.png`)}">
 <link rel="canonical" href="${authorUrl}">
 <meta name="robots" content="index, follow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;1,400&family=Montserrat:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 ${allStyles}
 ${getDarkModeCSS()}
 <style>
+/* ── HEADER LAYOUT FIX ── */
+.header { position: sticky; top: 0; z-index: 1000; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+.header-content { display: flex; align-items: center; justify-content: space-between; height: 80px; }
+.site-title img { height: 50px; width: auto; display: block; }
+.nav-menu { display: flex; align-items: center; gap: 20px; margin: 0; padding: 0; list-style: none; }
+.nav-item { position: relative; }
+.nav-link { font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 600; color: #333; text-decoration: none; text-transform: uppercase; padding: 10px 0; transition: color 0.3s; }
+.nav-link:hover { color: #8B4513; }
+.mobile-nav-toggle { display: none; background: none; border: none; font-size: 24px; color: #333; cursor: pointer; }
+[data-theme="dark"] .header { background: #1a1a1a; }
+[data-theme="dark"] .nav-link, [data-theme="dark"] .mobile-nav-toggle { color: #f5f5f5; }
+[data-theme="dark"] .nav-link:hover { color: #C89A47; }
+
 .author-page-header {
   background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
   color: white; padding: 50px 20px; text-align: center;
@@ -1421,22 +1536,25 @@ ${getDarkModeCSS()}
 }
 body { display: flex; flex-direction: column; min-height: 100vh; }
 main { flex: 1; }
+.author-bio-social { display: flex; gap: 12px; justify-content: center; margin-top: 14px; }
+.author-bio-social a { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.15); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; text-decoration: none; transition: background 0.2s, color 0.2s; }
+.author-bio-social a:hover { background: white; color: #8B4513; }
 </style>
 ${getDarkModeInitScript()}
 </head>
 <body>
-<header class="site-header">
-  <div class="header-inner">
-    <a href="/index.html" class="logo-link">
-      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight" class="logo-img">
+<header class="header">
+  <div class="container header-content">
+    <a href="/index.html" class="site-title">
+      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight">
     </a>
-    <button class="mobile-nav-toggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
-    <nav class="main-nav">
-      <ul class="nav-list" id="navMenu">
-        ${navHtml}
-        <li class="nav-item">${getDarkModeToggleBtn()}</li>
-      </ul>
-    </nav>
+    <div class="mobile-controls" style="display: flex; gap: 15px; align-items: center;">
+      <button class="mobile-nav-toggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+    </div>
+    <ul class="nav-menu" id="navMenu">
+      ${navHtml}
+      <li class="nav-item">${getDarkModeToggleBtn()}</li>
+    </ul>
   </div>
 </header>
 
@@ -1446,6 +1564,7 @@ ${getDarkModeInitScript()}
          onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 80 80%22%3E%3Crect width=%2280%22 height=%2280%22 fill=%22%238B4513%22/%3E%3Ctext x=%2240%22 y=%2252%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2236%22%3E%3F%3C/text%3E%3C/svg%3E'">
     <h1 class="author-page-name">${author.full_name}</h1>
     ${author.bio ? `<p class="author-page-bio">${author.bio}</p>` : ''}
+    ${buildAuthorSocialLinksHtml(author)}
   </div>
   <div class="author-articles-section">
     <h2 class="author-articles-heading">Articles by ${author.full_name} (${authorPosts.length})</h2>
@@ -1457,24 +1576,81 @@ ${getDarkModeInitScript()}
 </main>
 
 <footer class="site-footer">
-  <div class="footer-grid">
-    <div class="footer-col">
-      <img src="https://i.ibb.co/NdsYM9dx/web-logo-123.png" alt="The Limelight" style="height:50px;margin-bottom:15px;">
-      <p style="color:#ccc;font-size:0.9rem;">Literature, essays, arts and culture.</p>
+  <div class="footer-inner">
+
+    <!-- Column 1: Brand + About tagline -->
+    <div class="footer-col footer-brand">
+      <h3 class="footer-logo">THE LIMELIGHT</h3>
+      <p class="footer-tagline">
+        A bimonthly academic web magazine devoted to South Asian
+        literature, Islamic thought, arts and culture — writing for
+        a world that still believes ideas matter.
+      </p>
+      <a href="/contact.html" class="footer-about-link">
+        About The Limelight &rarr;
+      </a>
     </div>
+
+    <!-- Column 2: Explore -->
     <div class="footer-col">
-      <h4 class="footer-heading">Quick Links</h4>
+      <h4 class="footer-col-title">Explore</h4>
       <ul class="footer-links">
         <li><a href="/index.html">Home</a></li>
         <li><a href="/authors.html">Authors</a></li>
-        <li><a href="/contact.html">Contact</a></li>
+        <li><a href="/contact.html">Contact Us</a></li>
+        <li><a href="/sitemap.xml">Sitemap</a></li>
       </ul>
     </div>
-  </div>
+
+    <!-- Column 3: Categories -->
+    <div class="footer-col">
+      <h4 class="footer-col-title">Categories</h4>
+      <ul class="footer-links" id="footerCategories">
+        ${data.categoriesWithChildren
+          .filter(c => !c.parent_id)
+          .map(c => `<li><a href="/category/${c.slug}.html">${c.name}</a></li>`)
+          .join('')}
+      </ul>
+    </div>
+
+    <!-- Column 4: Follow us -->
+    <div class="footer-col">
+      <h4 class="footer-col-title">Follow Us</h4>
+      <div class="footer-social">
+        <a href="https://www.instagram.com/the_limelight_bimonthly/" target="_blank" rel="noopener" aria-label="Instagram">
+          <i class="fab fa-instagram"></i>
+        </a>
+        <a href="https://www.facebook.com/profile.php?id=100091897094886#" target="_blank" rel="noopener" aria-label="Facebook">
+          <i class="fab fa-facebook-f"></i>
+        </a>
+        <a href="https://www.youtube.com/@Thelimelightonline" target="_blank" rel="noopener" aria-label="YouTube">
+          <i class="fab fa-youtube"></i>
+        </a>
+      </div>
+    </div>
+
+  </div><!-- /.footer-inner -->
+
   <div class="footer-bottom">
-    <p>&copy; ${new Date().getFullYear()} The Limelight Online. All rights reserved.</p>
+    <p>&copy; 2025 The Limelight Online. All rights reserved.</p>
+    <p class="footer-bottom-links">
+      <a href="/contact.html">Contact</a>
+      &nbsp;&middot;&nbsp;
+      <a href="/sitemap.xml">Sitemap</a>
+    </p>
   </div>
 </footer>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const toggle = document.querySelector('.mobile-nav-toggle');
+  const navMenu = document.querySelector('.nav-menu');
+  if (toggle && navMenu) {
+    toggle.addEventListener('click', () => {
+      navMenu.classList.toggle('active');
+    });
+  }
+});
+</script>
 ${getDarkModeToggleScript()}
 </body>
 </html>`;
@@ -1504,7 +1680,7 @@ function validateArticleTemplate(template) {
 
 // ─── Phase 3: generateArticleHtml ─────────────────────────────────────────────
 
-function generateArticleHtml(article, template, allPosts) {
+function generateArticleHtml(article, template, allPosts, categoriesWithChildren) {
   const authorName   = article.authors?.full_name   || 'The Limelight';
   const authorAvatar = article.authors?.avatar_url   || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2235%22 height=%2235%22 viewBox=%220 0 35 35%22%3E%3Crect width=%2235%22 height=%2235%22 fill=%22%238B4513%22/%3E%3Ctext x=%2217%22 y=%2223%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2216%22%3E%3F%3C/text%3E%3C/svg%3E';
   const categoryName = article.categories?.name      || 'General';
@@ -1518,7 +1694,7 @@ function generateArticleHtml(article, template, allPosts) {
 
   const articleKeywords = `${categoryName}, ${authorName}, South Asian literature, essays, culture, The Limelight Online`;
 
-  const seoHeadTags = getSEOHeadTags({
+  let seoHeadTags = getSEOHeadTags({
     title: `${article.title} | The Limelight`,
     description: article.excerpt || '',
     keywords: articleKeywords,
@@ -1527,6 +1703,13 @@ function generateArticleHtml(article, template, allPosts) {
     type: 'article',
     image: article.image_url || ''
   });
+
+  if (article.status !== 'published') {
+    seoHeadTags = seoHeadTags.replace(
+      '<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">',
+      '<meta name="robots" content="noindex, nofollow">'
+    );
+  }
 
   // Inject our dynamic SEO tags
   output = output.replace('__SEO_HEAD_TAGS__', seoHeadTags);
@@ -1737,6 +1920,12 @@ function generateArticleHtml(article, template, allPosts) {
 
   output = output.replace('</body>', staticScript + '\n</body>');
 
+  const footerCatsHtml = (categoriesWithChildren || [])
+    .filter(c => !c.parent_id) // top-level only
+    .map(c => `<li><a href="/category/${c.slug}.html">${c.name}</a></li>`)
+    .join('');
+  output = output.replace('__FOOTER_CATEGORIES__', footerCatsHtml);
+
   return { html: output, safeSlug };
 }
 
@@ -1859,19 +2048,10 @@ async function main() {
   validateArticleTemplate(articleTemplate);
 
   let articleCount = 0;
-  for (const article of data.allPosts) {
+  for (const article of data.rawAllPosts) {
     try {
-      // Fetch full content individually to avoid Supabase JSON payload size limits
-      const { data: fullArticle, error } = await supabase
-        .from('posts')
-        .select('content')
-        .eq('id', article.id)
-        .single();
-      
-      if (error) throw new Error('Failed to fetch content: ' + error.message);
-      article.content = fullArticle.content;
 
-      const { html, safeSlug } = generateArticleHtml(article, articleTemplate, data.allPosts);
+      const { html, safeSlug } = generateArticleHtml(article, articleTemplate, data.allPosts, data.categoriesWithChildren);
       const dir = path.join('dist', 'article', safeSlug);
       fs.mkdirSync(dir, { recursive: true });
       fs.writeFileSync(path.join(dir, 'index.html'), html);
@@ -1880,8 +2060,7 @@ async function main() {
       console.error(`✗ FAILED: ${article.slug} — ${err.message}`);
     }
   }
-  console.log(`✓ Generated ${articleCount} article pages`);
-
+  console.log(` Generated ${articleCount} article pages`);
 
   // Phase 4 — Search, sitemap, Cloudflare config
   generateSearchJson(data.allPosts);
@@ -1905,6 +2084,8 @@ async function main() {
       });
       console.log('✓ Copied favicon files');
   }
+  
+  await runPostBuildSanityCheck();
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(`
@@ -1916,6 +2097,40 @@ Sitemap:      dist/sitemap.xml
 Build time:   ${elapsed}s
 =====================
 `);
+}
+
+async function runPostBuildSanityCheck() {
+  console.log('\n--- Running Post-Build Broken Link Sanity Check ---');
+  let brokenLinksFound = 0;
+  
+  function walk(dir) {
+    const list = fs.readdirSync(dir);
+    for (const item of list) {
+      const fullPath = path.join(dir, item);
+      const stat = fs.statSync(fullPath);
+      if (stat.isDirectory()) {
+        walk(fullPath);
+      } else if (fullPath.endsWith('.html')) {
+        const content = fs.readFileSync(fullPath, 'utf-8');
+        const brokenRegex = /href=["'](?:#|undefined|null|)["']/g;
+        let match;
+        while ((match = brokenRegex.exec(content)) !== null) {
+          console.warn(`[WARNING] Broken link found in ${fullPath}: href="${match[1]}"`);
+          brokenLinksFound++;
+        }
+      }
+    }
+  }
+  
+  if (fs.existsSync('dist')) {
+    walk('dist');
+  }
+  
+  if (brokenLinksFound === 0) {
+    console.log('✓ No broken placeholder links (href="#", href="", etc.) found!');
+  } else {
+    console.warn(`! Found ${brokenLinksFound} broken link(s) across generated HTML files.`);
+  }
 }
 
 main().catch((err) => {
