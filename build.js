@@ -1803,8 +1803,22 @@ function generateArticleHtml(article, template, allPosts, categoriesWithChildren
     });
   }
 
+  function stripInlineColorStyles(html) {
+    return html.replace(/style="([^"]*)"/gi, (match, styleContent) => {
+      const cleaned = styleContent
+        .split(';')
+        .filter(rule => {
+          const prop = rule.split(':')[0]?.trim().toLowerCase();
+          return prop && !['color', 'background-color', 'background'].includes(prop);
+        })
+        .join(';')
+        .trim();
+      return cleaned ? `style="${cleaned}"` : '';
+    });
+  }
+
   // Strip literal <p><br></p> sequences from article.content to avoid double spacing
-  let cleanContent = (article.content || '').replace(/<p><br><\/p>/gi, '');
+  let cleanContent = stripInlineColorStyles(article.content || '').replace(/<p><br><\/p>/gi, '');
   cleanContent = autoTagFigureCaptions(cleanContent);
 
   const schemaHtml = `
@@ -1886,7 +1900,7 @@ function generateArticleHtml(article, template, allPosts, categoriesWithChildren
 
   // Remove the entire Supabase runtime script block
   output = output.replace(
-    /<script>[^<]*?const SUPABASE_URL[\s\S]*?<\/script>/,
+    /<script>\s*const SUPABASE_URL[\s\S]*?<\/script>/,
     ''
   );
 
