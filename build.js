@@ -1796,8 +1796,16 @@ function generateArticleHtml(article, template, allPosts, categoriesWithChildren
   const relatedHtml = buildRelatedArticlesHtml(article, allPosts || []);
   const authorBioHtml = buildAuthorBioCardHtml(article);
 
+  function autoTagFigureCaptions(html) {
+    const captionPattern = /<p>(\s*(?:<[^>]+>)*\s*(?:Fig\.?|Figure)\s*\d+[.:]?.*?)<\/p>/gi;
+    return html.replace(captionPattern, (match, innerContent) => {
+      return `<p class="auto-fig-caption">${innerContent}</p>`;
+    });
+  }
+
   // Strip literal <p><br></p> sequences from article.content to avoid double spacing
-  const cleanContent = (article.content || '').replace(/<p><br><\/p>/gi, '');
+  let cleanContent = (article.content || '').replace(/<p><br><\/p>/gi, '');
+  cleanContent = autoTagFigureCaptions(cleanContent);
 
   const schemaHtml = `
     <script type="application/ld+json">
@@ -1914,7 +1922,7 @@ function generateArticleHtml(article, template, allPosts, categoriesWithChildren
 
     function setupShare() {
       const url   = encodeURIComponent(window.location.href);
-      const title = encodeURIComponent(\`\${escapeJs(article.title)}\`);
+      const title = encodeURIComponent(\`${article.title}\`);
       const fb = 'https://www.facebook.com/sharer/sharer.php?u=' + url;
       const tw = 'https://twitter.com/intent/tweet?text=' + title + '&url=' + url;
       const wa = 'https://api.whatsapp.com/send?text=' + title + '%20' + url;
