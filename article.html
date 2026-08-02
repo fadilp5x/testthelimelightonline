@@ -110,20 +110,21 @@
             object-position: center top;
         }
 
-        /* NEW — full-size variant: same outer box dimensions, but shows the
-           complete image letterboxed inside it instead of cropping */
+        /* NEW — full-size variant: dynamically sizes to image aspect ratio instead of letterboxing */
         .featured-image-container--full {
-            background: #f0ede8; /* letterbox fill color — light neutral matching
-                                     the site's warm ivory palette */
+            height: auto !important; /* Override fixed height from base class */
+            min-height: 200px;
+            max-height: 75vh;
+            display: flex;
+            justify-content: center;
+            background: transparent !important;
         }
         .featured-image-container--full .featured-image {
             object-fit: contain;
             width: 100%;
-            height: 100%;
-        }
-
-        [data-theme="dark"] .featured-image-container--full {
-            background: #1a1a1a;
+            height: auto;
+            max-height: 75vh;
+            cursor: pointer;
         }
 
         /* 3. Body Text (Readability Optimized) */
@@ -740,11 +741,13 @@
         [data-theme="dark"] .image-credit {
             color: #999;
         }
-        [data-theme="dark"] .article-body p {
-            color: #d0d0d0;
+        [data-theme="dark"] .article-body p,
+        [data-theme="dark"] .article-body li,
+        [data-theme="dark"] .article-body span {
+            color: #d5d5d5 !important;
         }
         [data-theme="dark"] .article-body a {
-            color: var(--dm-accent, #C89A47);
+            color: #C89A47 !important;
             text-decoration-color: rgba(200,154,71,0.4);
         }
         [data-theme="dark"] .toc-list a { color: #888; }
@@ -894,6 +897,46 @@
             img { max-width: 100% !important; page-break-inside: avoid; }
             h2, h3 { page-break-after: avoid; }
         }
+
+        /* Lightbox styles */
+        .image-lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 9999999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .image-lightbox.active {
+            display: flex;
+            opacity: 1;
+        }
+        .image-lightbox img {
+            max-width: 90vw;
+            max-height: 90vh;
+            object-fit: contain;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        /* Make article figures clickable */
+        .article-body figure img {
+            cursor: pointer;
+        }
     </style>
     <!-- Dark mode: apply saved theme before first paint to avoid flash -->
     <script>
@@ -909,24 +952,38 @@
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         const btn = document.getElementById('themeToggle');
-        if (!btn) return;
-        btn.addEventListener('click', () => {
-          const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-          if (isDark) {
-            document.documentElement.removeAttribute('data-theme');
-            try { localStorage.setItem('limelight-theme', 'light'); } catch(e) {}
-          } else {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            try { localStorage.setItem('limelight-theme', 'dark'); } catch(e) {}
-          }
-        });
+        if (btn) {
+          btn.addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (isDark) {
+              document.documentElement.removeAttribute('data-theme');
+              try { localStorage.setItem('limelight-theme', 'light'); } catch(e) {}
+            } else {
+              document.documentElement.setAttribute('data-theme', 'dark');
+              try { localStorage.setItem('limelight-theme', 'dark'); } catch(e) {}
+            }
+          });
+        }
 
         const printBtn = document.getElementById('printArticleBtn');
         if (printBtn) {
-          printBtn.addEventListener('click', () => {
-            window.print();
+          printBtn.addEventListener('click', () => window.print());
+        }
+
+        const closeBtn = document.getElementById('closeContributorWidget');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', () => {
+            const widget = document.getElementById('contributorWidget');
+            if (widget) widget.style.display = 'none';
+            try { sessionStorage.setItem('limelight-hide-contribute-widget', '1'); } catch(e) {}
           });
         }
+        try {
+          if (sessionStorage.getItem('limelight-hide-contribute-widget') === '1') {
+            const widget = document.getElementById('contributorWidget');
+            if (widget) widget.style.display = 'none';
+          }
+        } catch(e) {}
       });
     </script>
 </head>
@@ -1234,22 +1291,56 @@
             }
         }
 
-        document.getElementById('closeContributorWidget')?.addEventListener('click', () => {
-            const widget = document.getElementById('contributorWidget');
-            if (widget) widget.style.display = 'none';
-            try { sessionStorage.setItem('limelight-hide-contribute-widget', '1'); } catch(e) {}
+        }
+
+        const lightbox = document.getElementById('imageLightbox');
+        const lightboxImg = document.getElementById('lightboxImg');
+        const lightboxClose = document.getElementById('lightboxClose');
+
+        function openLightbox(src) {
+            if(!lightbox || !lightboxImg) return;
+            lightboxImg.src = src;
+            lightbox.classList.add('active');
+        }
+
+        function closeLightbox() {
+            if(!lightbox) return;
+            lightbox.classList.remove('active');
+            setTimeout(() => { if(lightboxImg) lightboxImg.src = ''; }, 300);
+        }
+
+        if(lightboxClose) {
+            lightboxClose.addEventListener('click', closeLightbox);
+        }
+        if(lightbox) {
+            lightbox.addEventListener('click', (e) => {
+                if(e.target === lightbox) closeLightbox();
+            });
+        }
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'Escape' && lightbox?.classList.contains('active')) {
+                closeLightbox();
+            }
         });
 
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                if (sessionStorage.getItem('limelight-hide-contribute-widget') === '1') {
-                    const widget = document.getElementById('contributorWidget');
-                    if (widget) widget.style.display = 'none';
-                }
-            } catch(e) {}
+        // Attach to featured image
+        const featuredImg = document.querySelector('.featured-image');
+        if (featuredImg) {
+            featuredImg.addEventListener('click', () => openLightbox(featuredImg.src));
+        }
+
+        // Attach to all article figure images
+        const articleImages = document.querySelectorAll('.article-body figure img');
+        articleImages.forEach(img => {
+            img.addEventListener('click', () => openLightbox(img.src));
         });
 
     </script>
+    
+    <div class="image-lightbox" id="imageLightbox">
+        <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
+        <img id="lightboxImg" src="" alt="Expanded Image">
+    </div>
 </body>
 </html>
 
