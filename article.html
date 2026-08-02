@@ -134,7 +134,13 @@
             color: #444;
             overflow-wrap: break-word; /* Prevents long words/URLs from breaking layout */
         }
-        .article-body p { margin-bottom: 0.9em; }
+        .article-body p {
+            font-family: 'Lato', sans-serif;
+            font-size: 17px;
+            line-height: 1.75;
+            color: #333;
+            margin-bottom: 0.9em;
+        }
         .article-body p:empty,
         .article-body p:has(> br:only-child) {
             margin: 0;
@@ -149,12 +155,19 @@
             margin: 30px auto; 
         }
 
-        .article-body h2 { 
-            font-family: 'Playfair Display', serif; 
-            font-size: 1.8rem; 
-            margin-top: 50px; 
-            margin-bottom: 20px; 
-            color: var(--accent-color);
+        .article-body h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 700;
+            margin: 1.8em 0 0.6em;
+            color: #1B1B1B;
+        }
+        .article-body h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px;
+            font-weight: 700;
+            margin: 1.5em 0 0.5em;
+            color: #1B1B1B;
         }
 
         .article-body blockquote {
@@ -226,58 +239,51 @@
         }
 
         /* ── Scholarly Style Presets ── */
-        .article-body .ql-byline {
+        .article-body .ql-style-caption {
+            font-family: 'Lato', sans-serif;
+            font-size: 14px;
             font-style: italic;
-            color: #666;
+            color: #777;
             text-align: center;
-            font-size: 1.05rem;
-            margin-bottom: 2em;
-            display: block;
+            line-height: 1.5;
+            margin: 0.4em 0 1.6em;
         }
-        .article-body .ql-section-head {
-            font-family: 'Playfair Display', serif;
+
+        .article-body .ql-style-byline {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12px;
             font-weight: 700;
-            color: var(--accent-color);
+            letter-spacing: 0.06em;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 1.1rem;
-            border-bottom: 2px solid var(--accent-color);
-            padding-bottom: 8px;
-            margin-top: 40px;
-            margin-bottom: 20px;
-            display: block;
+            color: #8B4513;
+            margin-bottom: 1em;
         }
-        .article-body .ql-pull-quote {
-            font-size: 1.4rem;
+
+        .article-body .ql-style-pullquote {
+            font-family: 'Playfair Display', serif;
+            font-size: 26px;
             font-style: italic;
-            text-align: center;
-            color: #555;
-            border-top: 2px solid var(--accent-color);
-            border-bottom: 2px solid var(--accent-color);
-            padding: 25px 30px;
-            margin: 35px 20px;
-            line-height: 1.6;
-            display: block;
+            line-height: 1.4;
+            color: #1B1B1B;
+            border-left: 3px solid #8B4513;
+            padding-left: 24px;
+            margin: 1.8em 0;
         }
-        .article-body .ql-ref-entry {
-            font-size: 0.9rem;
-            padding-left: 2em;
-            text-indent: -2em;
-            margin-bottom: 0.4em;
+
+        .article-body .ql-style-refentry {
+            font-family: 'Lato', sans-serif;
+            font-size: 15px;
             line-height: 1.5;
             color: #444;
-            display: block;
+            margin-bottom: 0.5em;
         }
-        .article-body .ql-ref-region {
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            font-size: 1.15rem;
-            color: var(--accent-color);
-            border-top: 1px solid #ddd;
-            padding-top: 15px;
-            margin-top: 30px;
-            margin-bottom: 15px;
-            display: block;
+
+        .article-body .ql-style-small {
+            font-family: 'Lato', sans-serif;
+            font-size: 13px;
+            color: #888;
+            line-height: 1.5;
+            margin-bottom: 0.6em;
         }
 
         /* ── QUILL FONT SIZES ── */
@@ -345,6 +351,26 @@
             display: block;
         }
         .related-card-title:hover { color: var(--accent-color); }
+
+        .sidebar-widget {
+            background: white;
+            padding: 30px 25px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .widget-close-btn {
+            position: absolute; top: 10px; right: 10px;
+            width: 24px; height: 24px; border-radius: 50%;
+            background: rgba(0,0,0,0.06); border: none; color: #888;
+            font-size: 12px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s, color 0.2s;
+        }
+        .widget-close-btn:hover { background: rgba(0,0,0,0.12); color: #333; }
+        .contributor-cta-v2 { position: relative; }
 
         /* ── Author Bio Card (bottom of article) ── */
         .author-bio-card {
@@ -485,18 +511,13 @@
         [data-theme="dark"] .article-body .auto-fig-caption {
             color: #999;
         }
-        [data-theme="dark"] .article-body .ql-pull-quote {
-            color: #bbb;
-            border-top-color: var(--dm-accent);
-            border-bottom-color: var(--dm-accent);
-        }
-        [data-theme="dark"] .article-body .ql-byline,
-        [data-theme="dark"] .article-body .ql-ref-entry { color: #aaa; }
-        [data-theme="dark"] .article-body .ql-section-head,
-        [data-theme="dark"] .article-body .ql-ref-region {
-            color: var(--dm-accent);
-            border-color: var(--dm-accent);
-        }
+        [data-theme="dark"] .article-body h2,
+        [data-theme="dark"] .article-body h3 { color: #f0f0f0; }
+        [data-theme="dark"] .article-body .ql-style-caption { color: #999; }
+        [data-theme="dark"] .article-body .ql-style-byline { color: #C89A47; }
+        [data-theme="dark"] .article-body .ql-style-pullquote { color: #e8e8e8; border-left-color: #C89A47; }
+        [data-theme="dark"] .article-body .ql-style-refentry { color: #bbb; }
+        [data-theme="dark"] .article-body .ql-style-small { color: #888; }
         [data-theme="dark"] .article-meta { border-color: #333; color: #aaa; }
         [data-theme="dark"] .toc-list a { color: #999; }
         [data-theme="dark"] .toc-list a.active { color: var(--dm-accent); border-right-color: var(--dm-accent); }
@@ -996,7 +1017,10 @@
                 </button>
             </div>
             
-            <div class="sidebar-widget contributor-cta-v2">
+            <div class="sidebar-widget contributor-cta-v2" id="contributorWidget">
+                <button class="widget-close-btn" id="closeContributorWidget" aria-label="Dismiss">
+                    <i class="fas fa-times"></i>
+                </button>
                 <div class="contributor-cta-icon">
                     <i class="fas fa-feather-alt"></i>
                 </div>
@@ -1005,10 +1029,7 @@
                     We're always looking for original essays, research, and creative writing on South Asian literature, Islamic thought, arts, and culture. If you have a story to tell, we'd love to read it.
                 </p>
                 <div class="contributor-cta-actions">
-                    <a href="/contact.html" class="cta-button-primary">
-                        Submit Your Work <span class="cta-arrow">&rarr;</span>
-                    </a>
-                    <a href="mailto:thelimelightin@gmail.com?subject=Article%20Submission%20Inquiry&body=Hi%20Limelight%20Editorial%20Team%2C%0A%0AI'd%20like%20to%20submit%20a%20piece%20for%20consideration.%0A%0ATitle%2FTopic%3A%20%0ABrief%20summary%3A%20%0A%0AThank%20you!" class="cta-button-secondary">
+                    <a href="mailto:thelimelightin@gmail.com?subject=Article%20Submission%20Inquiry&body=Hi%20Limelight%20Editorial%20Team%2C%0A%0AI'd%20like%20to%20submit%20a%20piece%20for%20consideration.%0A%0ATitle%2FTopic%3A%20%0ABrief%20summary%3A%20%0A%0AThank%20you!" class="cta-button-primary">
                         <i class="fas fa-envelope"></i> Email the Editors
                     </a>
                 </div>
@@ -1197,14 +1218,36 @@
             const tw = `https://twitter.com/intent/tweet?text=${title}&url=${url}`;
             const wa = `https://api.whatsapp.com/send?text=${title}%20${url}`;
             
-            document.getElementById('shareFb').href = fb;
-            document.getElementById('shareTw').href = tw;
-            document.getElementById('shareWa').href = wa;
-            
-            document.getElementById('mShareFb').href = fb;
-            document.getElementById('mShareTw').href = tw;
-            document.getElementById('mShareWa').href = wa;
+            const s = (id, link) => { const el = document.getElementById(id); if (el) el.href = link; };
+            s('shareFb', fb); s('shareTw', tw); s('shareWa', wa);
+            s('mShareFb', fb); s('mShareTw', tw); s('mShareWa', wa);
+
+            const cp = document.getElementById('mShareCp');
+            if (cp) {
+                cp.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    navigator.clipboard.writeText(decodeURIComponent(url)).then(() => {
+                        cp.innerHTML = '<i class="fas fa-check"></i>';
+                        setTimeout(() => cp.innerHTML = '<i class="fas fa-link"></i>', 2000);
+                    });
+                });
+            }
         }
+
+        document.getElementById('closeContributorWidget')?.addEventListener('click', () => {
+            const widget = document.getElementById('contributorWidget');
+            if (widget) widget.style.display = 'none';
+            try { sessionStorage.setItem('limelight-hide-contribute-widget', '1'); } catch(e) {}
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                if (sessionStorage.getItem('limelight-hide-contribute-widget') === '1') {
+                    const widget = document.getElementById('contributorWidget');
+                    if (widget) widget.style.display = 'none';
+                }
+            } catch(e) {}
+        });
 
     </script>
 </body>
