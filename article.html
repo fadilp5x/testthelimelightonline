@@ -103,19 +103,27 @@
             margin-bottom: 40px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.08);
         }
-        .featured-image-container.featured-image-full {
-            height: auto;
-        }
         .featured-image {
             width: 100%;
             height: 100%;
             object-fit: cover; /* Crucial: crops image instead of stretching */
             object-position: center top;
         }
-        .featured-image.full-image {
-            height: auto;
-            max-height: 85vh; /* Keep it from taking over entire screen if very tall */
+
+        /* NEW — full-size variant: same outer box dimensions, but shows the
+           complete image letterboxed inside it instead of cropping */
+        .featured-image-container--full {
+            background: #f0ede8; /* letterbox fill color — light neutral matching
+                                     the site's warm ivory palette */
+        }
+        .featured-image-container--full .featured-image {
             object-fit: contain;
+            width: 100%;
+            height: 100%;
+        }
+
+        [data-theme="dark"] .featured-image-container--full {
+            background: #1a1a1a;
         }
 
         /* 3. Body Text (Readability Optimized) */
@@ -126,7 +134,7 @@
             color: #444;
             overflow-wrap: break-word; /* Prevents long words/URLs from breaking layout */
         }
-        .article-body p { margin-bottom: 1.1em; }
+        .article-body p { margin-bottom: 0.9em; }
         .article-body p:empty,
         .article-body p:has(> br:only-child) {
             margin: 0;
@@ -709,74 +717,111 @@
         [data-theme="dark"] .sidebar-widget { background: #1a1a1a; border-color: #333; }
 
         /* --- Contributor Widget --- */
-        .contributor-cta {
-            margin-top: 2rem;
-            padding: 1.8rem;
-            background: #fdfbf7;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        .contributor-cta-v2 {
+            background: linear-gradient(135deg, #FAF8F4 0%, #F0EBE0 100%);
+            border: 1px solid #E6E1D8;
+            border-radius: 10px;
+            padding: 28px 24px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
         }
-        .contributor-cta:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+
+        .contributor-cta-v2::before {
+            content: '';
+            position: absolute;
+            top: -30px;
+            right: -30px;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(139,69,19,0.08) 0%, transparent 70%);
+            border-radius: 50%;
         }
-        .contributor-cta h4 {
-            margin-top: 0;
-            font-size: 1.25em;
-            color: var(--accent-color);
+
+        .contributor-cta-icon {
+            width: 52px;
+            height: 52px;
+            margin: 0 auto 16px;
+            background: #8B4513;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .contributor-cta-v2 h4 {
             font-family: 'Playfair Display', serif;
-            margin-bottom: 0.75rem;
+            font-size: 19px;
+            margin: 0 0 10px 0;
+            color: #1B1B1B;
         }
-        .contributor-cta p {
-            font-size: 0.95em;
-            line-height: 1.5;
-            margin-bottom: 1.2rem;
-            color: var(--text-color);
+
+        .contributor-cta-v2 p {
+            font-family: 'Lato', sans-serif;
+            font-size: 14px;
+            line-height: 1.65;
+            color: #666;
+            margin-bottom: 22px;
         }
-        .contributor-cta .email-section {
-            text-align: center;
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px dashed var(--border-color);
+
+        .contributor-cta-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
-        .contributor-cta .email-link {
-            font-size: 0.9em;
-            font-weight: 600;
-            color: var(--accent-color);
-            text-decoration: none;
+
+        .cta-button-primary {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            margin-top: 4px;
-            word-break: break-all;
-            transition: color 0.2s;
+            gap: 8px;
+            padding: 12px 20px;
+            background: #8B4513;
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background 0.2s, transform 0.2s;
         }
-        .contributor-cta .email-link:hover {
-            color: #C89A47;
-            text-decoration: underline;
-        }
+        .cta-button-primary:hover { background: #A0522D; transform: translateY(-1px); }
 
-        [data-theme="dark"] .contributor-cta {
-            background: #1a1a1a;
+        .cta-arrow { transition: transform 0.2s; display: inline-block; }
+        .cta-button-primary:hover .cta-arrow { transform: translateX(3px); }
+
+        .cta-button-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 11px 20px;
+            background: transparent;
+            color: #8B4513;
+            border: 1.5px solid #8B4513;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .cta-button-secondary:hover { background: #8B4513; color: white; }
+
+        [data-theme="dark"] .contributor-cta-v2 {
+            background: linear-gradient(135deg, #1a1a1a 0%, #222 100%);
             border-color: #333;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
-        [data-theme="dark"] .contributor-cta h4 {
-            color: var(--dm-accent);
-        }
-        [data-theme="dark"] .contributor-cta .email-link {
-            color: var(--dm-accent);
-        }
-        [data-theme="dark"] .contributor-cta .email-section {
-            border-top-color: #444;
-        }
-        [data-theme="dark"] .contributor-cta:hover {
-            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-        }
+        [data-theme="dark"] .contributor-cta-v2 h4 { color: #e0e0e0; }
+        [data-theme="dark"] .contributor-cta-v2 p { color: #aaa; }
+        [data-theme="dark"] .cta-button-secondary { color: #C89A47; border-color: #C89A47; }
+        [data-theme="dark"] .cta-button-secondary:hover { background: #C89A47; color: #111; }
         /* --- Full-Size Image CSS --- */
         .article-figure img {
             object-fit: cover;
@@ -937,13 +982,20 @@
                 </button>
             </div>
             
-            <div class="sidebar-widget contributor-cta">
-                <h4>Contribute to Limelight</h4>
-                <p>We invite thought-provoking essays, original research, and creative writing exploring South Asian literature, Islamic thought, arts, and vibrant culture.</p>
-                <div class="email-section">
-                    <p style="font-size: 0.85em; margin: 0; color: var(--text-muted, #666);">Email us directly at:</p>
-                    <a href="mailto:thelimelightin@gmail.com?subject=Limelight%20Contribution" class="email-link">
-                        <i class="fas fa-envelope"></i> thelimelightin@gmail.com
+            <div class="sidebar-widget contributor-cta-v2">
+                <div class="contributor-cta-icon">
+                    <i class="fas fa-feather-alt"></i>
+                </div>
+                <h4>Write for The Limelight</h4>
+                <p>
+                    We're always looking for original essays, research, and creative writing on South Asian literature, Islamic thought, arts, and culture. If you have a story to tell, we'd love to read it.
+                </p>
+                <div class="contributor-cta-actions">
+                    <a href="/contact.html" class="cta-button-primary">
+                        Submit Your Work <span class="cta-arrow">&rarr;</span>
+                    </a>
+                    <a href="mailto:thelimelightin@gmail.com?subject=Article%20Submission%20Inquiry&body=Hi%20Limelight%20Editorial%20Team%2C%0A%0AI'd%20like%20to%20submit%20a%20piece%20for%20consideration.%0A%0ATitle%2FTopic%3A%20%0ABrief%20summary%3A%20%0A%0AThank%20you!" class="cta-button-secondary">
+                        <i class="fas fa-envelope"></i> Email the Editors
                     </a>
                 </div>
             </div>
@@ -1077,8 +1129,8 @@
                     </div>
                 </header>
 
-                <div class="featured-image-container${article.template_type === 'full-image' ? ' featured-image-full' : ''}">
-                    <img src="${article.image_url}" alt="${article.title}" class="featured-image${article.template_type === 'full-image' ? ' full-image' : ''}">
+                <div class="featured-image-container ${article.featured_image_full_size ? 'featured-image-container--full' : ''}">
+                    <img src="${article.image_url}" alt="${article.title}" class="featured-image">
                 </div>
 
                 <div class="article-body" id="articleBody">
