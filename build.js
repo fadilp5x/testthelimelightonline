@@ -335,7 +335,7 @@ async function fetchAllData() {
     })
   );
 
-  const baseSelect = 'id, title, slug, excerpt, image_url, created_at, updated_at, category_id, author_id, is_featured, status, publish_date, template_type, authors(full_name, avatar_url, bio, twitter_url, instagram_url, linkedin_url, website_url, academia_url, orcid_url), categories(name, slug)';
+  const baseSelect = 'id, title, slug, excerpt, image_url, created_at, updated_at, category_id, author_id, is_featured, status, publish_date, featured_image_full_size, authors(full_name, avatar_url, bio, twitter_url, instagram_url, linkedin_url, website_url, academia_url, orcid_url), categories(name, slug)';
 
   let rawAllPosts = [];
   let e4 = null;
@@ -1390,6 +1390,20 @@ ${getDarkModeCSS()}
 [data-theme="dark"] .nav-link:hover { color: #C89A47; }
 </style>
 ${getDarkModeInitScript()}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "${escapeJs(category.name)}",
+  "description": "${escapeJs(category.description || '')}",
+  "url": "${SITE_URL}/category/${category.slug}.html",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Limelight",
+    "url": "${SITE_URL}"
+  }
+}
+</script>
 </head>
 <body>
 
@@ -1791,9 +1805,12 @@ function generateArticleHtml(article, template, allPosts, categoriesWithChildren
       "@context": "https://schema.org",
       "@type": "NewsArticle",
       "headline": "${escapeJs(article.title)}",
-      "image": [
-        "${escapeJs(article.image_url || `${SITE_URL}/favicon/favicon-512x512.png`)}"
-       ],
+      "image": {
+        "@type": "ImageObject",
+        "url": "${escapeJs(article.image_url || `${SITE_URL}/favicon/favicon-512x512.png`)}",
+        "width": 1200,
+        "height": 630
+      },
       "datePublished": "${new Date(article.created_at).toISOString()}",
       "dateModified": "${article.updated_at ? new Date(article.updated_at).toISOString() : new Date(article.created_at).toISOString()}",
       "author": [{
@@ -1836,8 +1853,8 @@ function generateArticleHtml(article, template, allPosts, categoriesWithChildren
         <span>${formattedDate}</span>
       </div>
     </header>
-    <div class="featured-image-container${article.template_type === 'full-image' ? ' featured-image-full' : ''}">
-      <img src="${article.image_url || ''}" alt="${escapeQuotes(article.title)}" class="featured-image${article.template_type === 'full-image' ? ' full-image' : ''}">
+    <div class="featured-image-container ${article.featured_image_full_size ? 'featured-image-container--full' : ''}">
+      <img src="${article.image_url || ''}" alt="${escapeQuotes(article.title)}" class="featured-image">
     </div>
     <div class="article-body" id="articleBody">
       ${cleanContent}
